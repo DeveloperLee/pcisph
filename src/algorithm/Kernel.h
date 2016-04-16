@@ -3,7 +3,7 @@
 #include "core/Common.h"
 #include "core/Vector.h"
 
-namespace pbs {
+namespace cs224 {
 
 // Implementation is based on paper:
 // https://nccastaff.bournemouth.ac.uk/jmacey/MastersProjects/MSc11/Rajiv/MasterThesis.pdf
