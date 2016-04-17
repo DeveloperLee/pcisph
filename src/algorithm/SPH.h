@@ -9,7 +9,6 @@
 #include "core/Box.h"
 #include "core/AlignedAllocator.h"
 #include "core/Timer.h"
-#include "core/Profiler.h"
 
 #include "geometry/Mesh.h"
 #include "geometry/ObjReader.h"
@@ -20,11 +19,39 @@
 #include <tbb/tbb.h>
 
 #include <vector>
+#include <numeric>
 
 namespace cs224 {
 
 class SPH {
 public:
+
+    float _particleRadius = 0.01f;
+    float _particleDiameter;
+    int _kernelRadiusFactor = 4;
+    float _kernelRadius;
+    float _kernelRadius2;
+    int _kernelSupportParticles;
+    float _restDensity = 1000.f;            ///< Rest density in kg/m^3
+    float _surfaceTension = 1.f;            ///< Surface tension amount
+    float _viscosity = 0.f;                 ///< Viscosity
+    float _timeStep = 0.001f;
+    float _compressionThreshold = 0.02f;
+
+    float _particleMass;                    ///< Particle mass
+    float _particleMass2;                   ///< Squared particle mass
+    float _invParticleMass;                 ///< Inverse particle mass
+
+    float _maxDensityVariationThreshold;
+    float _avgDensityVariationThreshold;
+    float _densityVariationScaling;
+    float _maxDensityVariation;
+    float _prevMaxDensityVariation = 1000.f;
+    float _avgDensityVariation;
+    float _maxVelocity;
+    float _maxForce;
+  
+    
     // Simulation parameters
     struct Parameters {
         float particleRadius;
@@ -106,45 +133,19 @@ private:
     // PCISPH update methods
     void pcisphUpdateGrid();
     void pcisphUpdateDensityVariationScaling();
-    void pcisphInitializeForces();
-    void pcisphPredictVelocitiesAndPositions();
-    void pcisphUpdatePressures();
-    void pcisphUpdatePressureForces();
-    void pcisphUpdateVelocitiesAndPositions();
+    void initForces();
+    void predictVP();
+    void updatePressures();
+    void updatePressureF();
+    void updateVP();   
 
-    void pcisphInit();
+    void init();
     void pcisphUpdate(int maxIterations = 100);
 
     void buildScene(const Scene &scene);
     void addFluidParticles(const ParticleGenerator::Volume &volume);
     void addBoundaryParticles(const ParticleGenerator::Boundary &boundary);
 
-    //Method _method;
-    float _particleRadius = 0.01f;
-    float _particleRadius2;
-    float _particleDiameter;
-    int _kernelRadiusFactor = 4;
-    float _kernelRadius;
-    float _kernelRadius2;
-    int _kernelSupportParticles;
-    float _restDensity = 1000.f;            ///< Rest density in kg/m^3
-    float _surfaceTension = 1.f;            ///< Surface tension amount
-    float _viscosity = 0.f;                 ///< Viscosity
-    float _timeStep = 0.001f;
-    float _compressionThreshold = 0.02f;
-
-    float _particleMass;                    ///< Particle mass
-    float _particleMass2;                   ///< Squared particle mass
-    float _invParticleMass;                 ///< Inverse particle mass
-
-    float _maxDensityVariationThreshold;
-    float _avgDensityVariationThreshold;
-    float _densityVariationScaling;
-    float _maxDensityVariation;
-    float _prevMaxDensityVariation = 1000.f;
-    float _avgDensityVariation;
-    float _maxVelocity;
-    float _maxForce;
 
     Parameters _parameters;
 
@@ -181,4 +182,4 @@ private:
     float _timePreShock;
 };
 
-} 
+} // namespace pbs

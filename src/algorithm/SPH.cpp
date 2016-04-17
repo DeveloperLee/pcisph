@@ -4,14 +4,17 @@
 
 #include <tbb/enumerable_thread_specific.h>
 
-namespace cs224 {
+// [1] Weakly compressible SPH for free surface flows
+// [2] Predictive-Corrective Incompressible SPH
+// [3] Versatile Surface Tension and Adhesion for SPH Fluids
+// [4] Versatile Rigid-Fluid Coupling for Incompressible SPH
 
-#define HANDLE_BOUNDARIES 1
+namespace cs224 {
 
 template<typename T>
 static void dumpVector(const std::vector<T> &v) {
     for (const auto &i : v) {
-        DBG("%s", i);
+        PRINT("%s", i);
     }
 }
 
@@ -26,7 +29,6 @@ SPH::SPH(const Scene &scene) {
     _compressionThreshold = scene.settings.getFloat("compressionThreshold", _compressionThreshold);
 
     // Compute derived constants
-    _particleRadius2 = sqr(_particleRadius2);
     _particleDiameter = 2.f * _particleRadius;
 
     _kernelRadius = _kernelRadiusFactor * _particleRadius;
@@ -81,21 +83,9 @@ SPH::SPH(const Scene &scene) {
     updateBoundaryGrid();
     updateBoundaryMasses();
 
-    DBG("particleRadius = %f", _particleRadius);
-    DBG("kernelRadius = %f", _kernelRadius);
-    DBG("kernelSupportParticles = %d", _kernelSupportParticles);
-    DBG("restDensity = %f", _restDensity);
-    DBG("particleMass = %f", _particleMass);
-    DBG("gravity = %s", _gravity);
-    DBG("surfaceTension = %f", _surfaceTension);
-    DBG("viscosity = %f", _viscosity);
-    DBG("timeStep = %f", _timeStep);
-    DBG("# particles = %d", _fluidPositions.size());
-    DBG("# boundary particles = %d", _boundaryPositions.size());
-    DBG("Initializing simulation ...");
-    
+    PRINT("Initializing simulation ...");
     // Initialize pci-sph simulation
-     pcisphInit();
+     init();
 }
 
 void SPH::reset() {
@@ -134,15 +124,16 @@ void SPH::updateBoundaryMasses() {
         iterateNeighbours(_boundaryGrid, _boundaryPositions, _boundaryPositions[i], [this, &weight] (size_t j, const Vector3f &r, float r2) {
             weight += _kernel.poly6(r2);
         });
-        _boundaryMasses[i] = _restDensity / (_kernel.poly6C * weight);
-        _boundaryMasses[i] /= 1.17f;
+        _boundaryMasses[i] = _restDensity / (_kernel.poly6C * weight) / 1.17f;
     });
 }
 
-// Computes densities of fluid and boundary particles based on [4] equation 6
+//
 void SPH::updateDensities() {
-#if HANDLE_BOUNDARIES
+
     parallelFor(_boundaryPositions.size(), [this] (size_t i) {
+        
+        // If a particle doesn't have neighbours, skip.
         if (!_boundaryActive[i]) {
             return;
         }
@@ -159,7 +150,6 @@ void SPH::updateDensities() {
 
         _boundaryDensities[i] = density;
     });
-#endif
 
     parallelFor(_fluidPositions.size(), [this] (size_t i) {
         float fluidDensity = 0.f;
@@ -167,13 +157,11 @@ void SPH::updateDensities() {
             fluidDensity += _kernel.poly6(r2);
         });
         float density = _kernel.poly6C * _particleMass * fluidDensity;
-#if HANDLE_BOUNDARIES
         float boundaryDensity = 0.f;
         iterateNeighbours(_boundaryGrid, _boundaryPositions, _fluidPositions[i], [&] (size_t j, const Vector3f &r, float r2) {
             boundaryDensity += _kernel.poly6(r2) * _boundaryMasses[j];;
         });
         density += _kernel.poly6C * boundaryDensity;
-#endif
 
         _fluidDensities[i] = density;
     });
@@ -230,7 +218,6 @@ void SPH::pcisphUpdateGrid() {
     });
 }
 
-
 // This function calculates the density scaling factor that is applied to every 
 // particle in the current iteration, scaling factor is essential for dealing 
 // with the particles that have insufficient neighbours, which, otherwise would
@@ -255,9 +242,7 @@ void SPH::pcisphUpdateDensityVariationScaling() {
 
     float beta = 2.f * sqr((_particleMass * _timeStep) / _restDensity);
     _densityVariationScaling = -1.f / (beta * (-gradSum.dot(gradSum) - gradDotSum));
-#if 0
-    DBG("densityVariationScaling = %f", _densityVariationScaling);
-#endif
+    PRINT("densityVariationScaling = %f", _densityVariationScaling);
 }
 
 // In this implementation the initial force is mainly based on three components
@@ -266,7 +251,7 @@ void SPH::pcisphUpdateDensityVariationScaling() {
 // 3. Gravity : F = mg 
 // After calculating the intial force, set pressure and pressure force to 0
 // according to the PCISPH algorithm.
-void SPH::pcisphInitializeForces() {
+void SPH::initForces() {
     parallelFor(_fluidPositions.size(), [&] (size_t i) {
         
         // Terms for computing F(v,g,ext) in the paper algorithm.
@@ -316,7 +301,7 @@ void SPH::pcisphInitializeForces() {
     });
 }
 
-void SPH::pcisphPredictVelocitiesAndPositions() {
+void SPH::predictVP() {
     parallelFor(_fluidPositions.size(), [&] (size_t i) {
         Vector3f a = _invParticleMass * (_fluidForces[i] + _fluidPressureForces[i]);
         _fluidVelocitiesNew[i] = _fluidVelocities[i] + a * _timeStep;
@@ -324,7 +309,7 @@ void SPH::pcisphPredictVelocitiesAndPositions() {
     });
 }
 
-void SPH::pcisphUpdatePressures() {
+void SPH::updatePressures() {
     tbb::enumerable_thread_specific<float> maxDensityVariation(-std::numeric_limits<float>::infinity());
     tbb::enumerable_thread_specific<float> accDensityVariation(0.f);
 
@@ -334,13 +319,12 @@ void SPH::pcisphUpdatePressures() {
             fluidDensity += _kernel.poly6(r2);
         });
         float density = _kernel.poly6C * _particleMass * fluidDensity;
-#if HANDLE_BOUNDARIES
+
         float boundaryDensity = 0.f;
         iterateNeighbours(_boundaryGrid, _boundaryPositions, _fluidPositionsNew[i], [&] (size_t j, const Vector3f &r, float r2) {
             boundaryDensity += _kernel.poly6(r2) * _boundaryMasses[j];;
         });
         density += _kernel.poly6C * boundaryDensity;
-#endif
 
         float densityVariation = std::max(0.f, density - _restDensity);
         maxDensityVariation.local() = std::max(maxDensityVariation.local(), densityVariation);
@@ -352,13 +336,9 @@ void SPH::pcisphUpdatePressures() {
     _maxDensityVariation = std::accumulate(maxDensityVariation.begin(), maxDensityVariation.end(), 0.f, [] (float a, float b) { return std::max(a, b); });
     _avgDensityVariation = std::accumulate(accDensityVariation.begin(), accDensityVariation.end(), 0.f) / _fluidPositions.size();
 
-#if 0
-    DBG("maxDensityVariation = %f", _maxDensityVariation);
-    DBG("avgDensityVariation = %f", _avgDensityVariation);
-#endif
 }
 
-void SPH::pcisphUpdatePressureForces() {
+void SPH::updatePressureF() {
     parallelFor(_fluidPositions.size(), [&] (size_t i) {
         Vector3f pressureForce;
 
@@ -376,7 +356,6 @@ void SPH::pcisphUpdatePressureForces() {
             pressureForce -= _particleMass2 * (pressure_i / sqr(density_i) + pressure_j / sqr(density_j)) * _kernel.spikyGrad1 * _kernel.spikyGrad(r, rn);
         });
 
-#if HANDLE_BOUNDARIES
         iterateNeighbours(_boundaryGrid, _boundaryPositions, _fluidPositions[i], [&] (size_t j, const Vector3f &r, float r2) {
             if (r2 < 1e-5f) {
                 return;
@@ -390,13 +369,12 @@ void SPH::pcisphUpdatePressureForces() {
             const float &pressure_j = _fluidPressures[i];       
             pressureForce -= _particleMass * _boundaryMasses[j] * (pressure_i / sqr(density_i) + pressure_j / sqr(density_j)) * _kernel.spikyGrad1 * _kernel.spikyGrad(r, rn);
         });
-#endif
 
         _fluidPressureForces[i] = pressureForce;
     });
 }
 
-void SPH::pcisphUpdateVelocitiesAndPositions() {
+void SPH::updateVP() {
     tbb::enumerable_thread_specific<float> maxVelocity(0.f);
     tbb::enumerable_thread_specific<float> maxForce(0.f);
 
@@ -415,17 +393,18 @@ void SPH::pcisphUpdateVelocitiesAndPositions() {
     std::swap(_fluidVelocitiesNew, _fluidVelocities);
 }
 
-void SPH::pcisphInit() {
+void SPH::init() {
     // Compute densities
     pcisphUpdateGrid();
     updateDensities();
+    
     float mind = std::numeric_limits<float>::infinity();
     float maxd = -std::numeric_limits<float>::infinity();
     for (auto d : _fluidDensities) {
         mind = std::min(mind, d);
         maxd = std::max(maxd, d);
     }
-    DBG("min/max densities = %f/%f", mind, maxd);
+    PRINT("min/max densities = %f/%f", mind, maxd);
 
     _fluidPositionsPreShock = _fluidPositions;
     _fluidVelocitiesPreShock = _fluidVelocities;
@@ -441,58 +420,31 @@ void SPH::pcisphInit() {
 }
 
 void SPH::pcisphUpdate(int maxIterations) {
-    DebugMonitor::clear();
-
-    Profiler::profile("Updage Grid", [&] () {
-        pcisphUpdateGrid();
-    });
-
-    Profiler::profile("Activate Boundary", [&] () {
-        activateBoundaryParticles();
-    });
-
-    Profiler::profile("Update Densities", [&] () {
-        updateDensities();
-    });
-
-    Profiler::profile("Update Normals", [&] () {
-        updateNormals();
-    });
-
-    Profiler::profile("Initialize Forces", [&] () {
-        pcisphInitializeForces();
-    });
-
+    DebugMonitor::clear();   
+    pcisphUpdateGrid();
+    activateBoundaryParticles();
+    updateDensities();
+    updateNormals();
+    initForces();
+    
     int k = 0;
     while (k < maxIterations) {
-        Profiler::profile("Predict velocities/positions", [&] () {
-            pcisphPredictVelocitiesAndPositions();
-        });
-        Profiler::profile("Update pressures", [&] () {
-            pcisphUpdateDensityVariationScaling();
-            pcisphUpdatePressures();
-        });
-        Profiler::profile("Update pressure forces", [&] () {
-            pcisphUpdatePressureForces();
-        });
+        predictVP();
+        pcisphUpdateDensityVariationScaling();
+        updatePressures();
+        updatePressureF();
         ++k;
         if (k >= 3 && _maxDensityVariation < _maxDensityVariationThreshold) {
             break;
         }
     }
     if (k > 3) {
-        DBG("Computed %d pressure iterations!", k);
+        PRINT("Computed %d pressure iterations!", k);
     }
+    
     DebugMonitor::addItem("pressureIterations", "%d", k);
-
-    Profiler::profile("Update velocities/positions", [&] () {
-        pcisphUpdateVelocitiesAndPositions();
-    });
-
-    Profiler::profile("Collision Update", [&] () {
-        enforceBounds();
-    });
-
+    updateVP();
+    enforceBounds();
     DebugMonitor::addItem("fluidParticles", "%d", _fluidPositions.size());
     DebugMonitor::addItem("boundaryParticles", "%d", _boundaryPositions.size());
 
@@ -523,15 +475,14 @@ void SPH::pcisphUpdate(int maxIterations) {
     if ((_maxDensityVariation - _prevMaxDensityVariation > _maxDensityVariationThreshold) ||
         (_maxDensityVariation > _maxDensityVariationThreshold) ||
         (0.45f * _kernelRadius / _maxVelocity < _timeStep)) {
-        
         if (_maxDensityVariation - _prevMaxDensityVariation > _maxDensityVariationThreshold) {
-            DBG("shock due to [1]");
+            PRINT("shock due to [1]");
         }
         if (_maxDensityVariation > _maxDensityVariationThreshold) {
-            DBG("shock due to [2]");
+            PRINT("shock due to [2]");
         }
         if (0.45f * _kernelRadius / _maxVelocity < _timeStep) {
-            DBG("shock due to [3]");
+            PRINT("shock due to [3]");
         }
         _timeStep = std::min(0.2f * std::sqrt(_kernelRadius / _maxForce), 0.25f * _kernelRadius / _maxVelocity);
 
@@ -608,4 +559,4 @@ void SPH::addBoundaryParticles(const ParticleGenerator::Boundary &boundary) {
 }
 
 
-}
+} 
