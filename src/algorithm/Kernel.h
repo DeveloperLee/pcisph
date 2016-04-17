@@ -1,7 +1,9 @@
 #pragma once
 
-#include "core/Common.h"
-#include "core/Vector.h"
+#include "basics/Common.h"
+#include "basics/Vector.h"
+
+#include "utils/Math.h"
 
 namespace cs224 {
 
@@ -28,7 +30,7 @@ struct Kernel {
     // Initialize kernel
     void init(float h_) {
         h = h_;
-        h2 = sqr(h);
+        h2 = pow2(h);
         halfh = 0.5f * h;
         pow6h = std::pow(h, 6.f);
         pow9h = std::pow(h, 9.f);
@@ -54,10 +56,10 @@ struct Kernel {
     
     // Poly6 kernel 
     inline float poly6(float r2) const {
-        return cube(h2 - r2);
+        return pow3(h2 - r2);
     }
     inline Vector3f poly6Grad(const Vector3f &r, float r2) const {
-        return sqr(h2 - r2) * r;
+        return pow2(h2 - r2) * r;
     }
     inline float poly6Laplace(float r2) {
         return (h2 - r2) * (3.f * h2 - 7.f * r2);
@@ -65,10 +67,10 @@ struct Kernel {
     
     // Spiky kernel 
     inline float spiky(float rn) const {
-        return cube(h - rn);
+        return pow3(h - rn);
     }
     inline Vector3f spikyGrad(const Vector3f &r, float rn) const {
-        return sqr(h - rn) * r * (1.f / rn);
+        return pow2(h - rn) * r * (1.f / rn);
     }
     inline float spikyLaplace(float rn) const {
         return (h - rn) * (h - 2.f * rn) / rn;
@@ -82,9 +84,9 @@ struct Kernel {
     // Surface tension kernel
     inline float surfaceTension(float rn) const {
         if (rn < halfh) {
-            return 2.f * cube(h - rn) * cube(rn) + surfaceTensionOffset;
+            return 2.f * pow3(h - rn) * pow3(rn) + surfaceTensionOffset;
         } else {
-            return cube(h - rn) * cube(rn);
+            return pow3(h - rn) * pow3(rn);
         }
     }
 };
