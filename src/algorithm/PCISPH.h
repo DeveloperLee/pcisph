@@ -9,15 +9,16 @@
 
 #pragma once 
 
-#include "basics/Common.h"
-#include "basics/Vector.h"
-#include "basics/Box.h"
+#include "utils/STD.h"
+#include "utils/Vector.h"
+#include "utils/Box.h"
 
 #include <tbb/tbb.h>
 #include <vector>
 #include <numeric>
 
 #define PI 3.141593
+#define RELAX_ITERATION 10000;
 
 namespace cs224 {
     
@@ -109,20 +110,23 @@ public:
      // Following functions will be invoked before the simulation loop
      PCISPH(const Scene &scene);         // The simulation must be initialized with a parsed scene.
      virtual ~PCISPH();
-     void initPCISPH();
      void buildScene(const Scene &scene);  // Build the parsed scene.
+     void allocMemory(int fluidSize, int boundarySize); 
+     void buildBoundaryGrids();          // Build boundary grids before the simulation start.
+     void buildFluidGrids();             // Build fluid grids. 
+     void massifyBoundary();             // Give every boundary particle a mass.
+     void basicSimSetup();    
      void generateFluidParticles(const ParticleGenerator::Volume &volume);
      void generateBoundaryParticles(const ParticleGenerator::Boundary &boundary);
-     void buildBoundaryGrids();          // Build boundary grids before the simulation start.
-     void buildFluidGrids();      		 // Build fluid grids.
-     void massifyBoundary();       		 // Give every boundary particle a mass.
      void initDensities();        		 // Initialize densities for both fluid and boundary particles.
+     void initShocks();                  // Initialize shock buffers.
      void initNormals();          		 // Initialize normal vectors for fluid particles.
      void initForces();           		 // Initialize internal and external forces.
+     void initBoundary();                // Initialize bounding boxes.
      void testBoundary();         		 // Test the validness of each particle.
    
      // Simulation trigger function.
-     void simulate(); 
+     void simulate(int maxIterations); 
      void update(float deltaT);
      void updateStep();          
 
@@ -139,12 +143,10 @@ public:
      void handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler);
      void adjustTimestep();        
    
-
-     void getMinMaxDensity(float &min, float &max);
      void relax();                 // Relax the particle distribution.
      void resetVelocity();
      void resetPosition(); 
-     void resetTime();
+
      
      // Getter functions
      const Box3f &getBounds() const { return boundaryBox; }
@@ -166,10 +168,12 @@ private:
      PCI1Mf fluidPressures;
      PCI3Mf fluidForces;
      PCI3Mf fluidPressureForces;
+
      PCI3Mf currentFluidPosition;
      PCI3Mf newFluidPosition;
      PCI3Mf currentFluidVelocity;
      PCI3Mf newFluidVelocity;
+
      PCI3Mf fluidPositionBeforeShock;
      PCI3Mf fluidVelocityBeforeShock;
      PCI3Mf fluidNormals;
@@ -188,7 +192,7 @@ private:
      Grid fluidGrid;
      Grid boundaryGrid;
      Kernel W;
-     Box3f boundaryBox;
+     Box3f boundaryBox;  // Bounding box for the whole scene
 
 };
 

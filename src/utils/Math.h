@@ -17,5 +17,5 @@ namespace cs224 {
 
     template<typename T>
     static constexpr T pow9(T x) { return x*x*x*x*x*x*x*x*x; }
-
+ 
 }
