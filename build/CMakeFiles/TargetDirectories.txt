@@ -1,0 +1,9 @@
+/Users/LOVEME/Desktop/pcisph/build/CMakeFiles/fluid_simulator.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/tbb/CMakeFiles/tbb_def_files.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/CMakeFiles/mkdoc.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/CMakeFiles/nanogui.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/tbb/CMakeFiles/tbb_static.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/ext_build/glfw/src/CMakeFiles/glfw_objects.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/ext_build/glfw/src/CMakeFiles/glfw.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/CMakeFiles/bin2c.dir
+/Users/LOVEME/Desktop/pcisph/build/ext_build/nanogui/ext_build/glfw/CMakeFiles/uninstall.dir

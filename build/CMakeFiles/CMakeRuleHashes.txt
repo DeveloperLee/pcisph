@@ -1,0 +1,7 @@
+# Hashes of file build rules.
+bdf7aa15db6fd97028787fc154fc7489 ext_build/nanogui/CMakeFiles/mkdoc
+21209b62eb77e06cb709592da2178951 ext_build/nanogui/ext_build/glfw/CMakeFiles/uninstall
+653d43c815b781dce544debb0b965b55 ext_build/nanogui/resources.cpp
+e790fad46ff8ac80009fc949c30123bb ext_build/tbb/CMakeFiles/tbb_def_files
+63fa9b8f5c61527351f751d890bdd206 ext_build/tbb/tbb.def
+d39b0d5cc9716fbc62379476dd2fcdc4 ext_build/tbb/tbbmalloc.def

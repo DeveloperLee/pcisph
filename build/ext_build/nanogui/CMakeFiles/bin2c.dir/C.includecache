@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/LOVEME/Desktop/pcisph/packages/nanogui/resources/bin2c.c
+stdlib.h
+-
+stdio.h
+-
+string.h
+-
+ctype.h
+-
+
