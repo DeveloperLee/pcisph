@@ -1,5 +1,4 @@
-#ifndef __DX_PCISPH_FLUID_SIMULATOR_STD__
-#define __DX_PCISPH_FLUID_SIMULATOR_STD__
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -8,9 +7,18 @@
 #include <utils/vector.h>
 
 
+
+//============================================================
+// Constants
+//============================================================
+
+#define PI 3.1415926536
+
 //============================================================
 // Types define
 //============================================================
+
+namespace cs224 {
 
 template <typename Scalar, int Dimension>  struct TVector;
 template <typename Vector>                 struct TBox;
@@ -47,6 +55,6 @@ typedef TBox<Vector4i>          Box4i;
 typedef Eigen::Matrix<float,    Eigen::Dynamic, Eigen::Dynamic> Matrixf;
 typedef Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic> Matrixu;
 
-#endif
+} // name space cs224
 
 
