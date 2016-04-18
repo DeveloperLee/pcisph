@@ -3,6 +3,7 @@
 /* "Predictive-Corrective Incompressible SPH (PCISPH)" : https://graphics.ethz.ch/~sobarbar/papers/Sol09/Sol09.pdf
 /* Besides impelementing PCI-SPH, we also integrated extra features such as handling boundary particles, 
 /* dynamically adjusted timesteps and surface tension approximations.
+/*
 /* Zihao Li 2016/4/16.
 **/
 
