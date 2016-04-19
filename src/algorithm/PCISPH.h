@@ -18,7 +18,9 @@
 #include <numeric>
 
 #define PI 3.141593
-#define RELAX_ITERATION 10000;
+#define RELAX_ITERATION 10000
+#define MIN_ITERATIONS  3
+#define EPSILON 1e-7f
 
 namespace cs224 {
     
@@ -38,7 +40,7 @@ public:
      // --------- Particle physical properties ---------
 	 struct ParticleParameters {
         
-         float radius = 0.01f;
+         float radius;
          float diameter;
          float mass;
          float squaredMass; 
@@ -65,8 +67,8 @@ public:
 
          void init(float s, float r, float d) {
          	scale = s;
-         	radius = r;
-         	squaredRadius = pow2(r);
+         	radius = scale * r;
+         	squaredRadius = pow2(radius);
          	capacity = int(std::ceil(4.f / 3.f * PI * pow3(radius)) / pow3(d));
          }
 	 };
@@ -77,15 +79,22 @@ public:
 	 // --------- Constant Simulation parameters ---------
 	 // These parameters should be constant during the simulation.
 	 struct SimConstParameters { 
-         float restDensity = 1000.f;   // Incompressible fluid property: reference density, used for determining the density error.
-         float surfaceTension = 1.f;   // The scale of surface tension, the bigger this parameter, the bigger the surface tension is.
-         float viscosity = 0.f;        
-         float maxCompression = 0.02f; // The maximum compression that the simulation allows. 
-         Vector3f gravity = Vector3f(0.f, -9.8f, 0.f);  // The gravity of the simulation space.
-
+         float restDensity;         // Incompressible fluid property: reference density, used for determining the density error.
+         float surfaceTension;      // The scale of surface tension, the bigger this parameter, the bigger the surface tension is.
+         float viscosity;           // The scale of viscosity.
+         float maxCompressionf;     // The maximum compression that the simulation allows. 
+         Vector3f gravity;          // The gravity of the simulation space.
+         
+         void init(float _resD, float _surfT, float _vis, float _maxComp, Vector3f _g) {
+            restDensity = _resD;
+            surfaceTension = _surfT;
+            viscosity = _vis;
+            maxCompression = _maxComp;
+            gravity = _g;
+         }
 	 };
 	 SimConstParameters simConstParams;
-	 const SimConstParameters &getKernelParams() const {return simConstParams;}
+	 const SimConstParameters &getSimConstParams() const {return simConstParams;}
 
 
 	 // --------- Simulation parameters ---------
@@ -100,16 +109,16 @@ public:
      float previousMaxDensityVariance;
      float maximumVelocity;
      float maximumForce;
-     float timeStep = 0.001f; 
+     float timeStep;
      float currentTime;
      float timeBeforeShock;
-
 
 
      // --------- Public functions ---------
      // Following functions will be invoked before the simulation loop
      PCISPH(const Scene &scene);         // The simulation must be initialized with a parsed scene.
      virtual ~PCISPH();
+     void loadParams(Settings &settings);
      void buildScene(const Scene &scene);  // Build the parsed scene.
      void allocMemory(int fluidSize, int boundarySize); 
      void buildBoundaryGrids();          // Build boundary grids before the simulation start.
@@ -126,9 +135,8 @@ public:
      void testBoundary();         		 // Test the validness of each particle.
    
      // Simulation trigger function.
-     void simulate(int maxIterations); 
-     void update(float deltaT);
-     void updateStep();          
+     void simulate(int maxIterations = 100); 
+     void update(float deltaT);        
 
      // Following functions will be invoked during the simulation loop.
      void predictVelocityAndPosition();  // Predict the velocity and position after a short time step.
@@ -140,14 +148,12 @@ public:
      void setVelocityAndPosition();
      void setDebugger();
      void adjustParticles(); 
-     void handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler);
-     void adjustTimestep();        
+     void adjustTimestep();
+     void detectShocks();
+     void handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler);    
    
      void relax();                 // Relax the particle distribution.
-     void resetVelocity();
-     void resetPosition(); 
-
-     
+   
      // Getter functions
      const Box3f &getBounds() const { return boundaryBox; }
      float getTimeStep() const { return timeStep; }

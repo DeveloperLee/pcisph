@@ -12,8 +12,8 @@ namespace cs224 {
 // @Params scene : parsed scene object.
 // @Tested : false
 PCISPH::PCISPH(const Scene &scene) {
-   // TODO : Load parameters from the scene file.
-   
+   // TODO : Implement Scene.h
+   loadParams(scene.settings);
    
    // Build the scene based on loaded parameters.
    buildScene(scene);
@@ -35,10 +35,41 @@ PCISPH::PCISPH(const Scene &scene) {
    basicSimSetup();
 }
 
+PCISPH::~PCISPH() {
+
+}
+
+// @Func : Load paramters from settings.
+// TODO: Implement Settings.h, Settings.h should be a member of Scene.h
+void PCISPH::loadParams(const Settings &settings) {
+
+} 
+
 // @Func : Build the simulation scene based on the parsed scene file.
 // @Params scene : parsed scene object.
 // @Tested : false
 void PCISPH::buildScene(const Scene &scene) {
+
+}
+
+void PCISPH::buildFluidGrids() {
+
+}
+
+void PCISPH::buildBoundaryGrids() {
+
+}
+
+// TODO: Implement Particle.h
+void PCISPH::generateFluidParticles(const Particle::Volume &volume) {
+
+}
+
+void PCISPH::generateBoundaryParticles(const Particle::Boundary &boundary) {
+
+}
+
+void PCISPH::massifyBoundary() {
 
 }
 
@@ -77,19 +108,99 @@ void PCISPH::relax() {
 }
 
 
+// TODO: Build fluid grid
+void PCISPH::buildFluidGrids() {
+
+}
+
+// @Func : Test the whether a boundary particle is alive.
+//         A boundary particle is considered alive iff
+//         it has at least one neighbour.
+//  @Tested : true
+void PCISPH::testBoundary() {
+    ConcurrentUtils::ccLoop(boundaryPositions.size(), [this] (size_t i) {
+        boundaryStatus[i] = fluidGrid.isIsolate(kernelParams.radius, currentFluidPosition, boundaryPositions[i]);
+    });
+}
 
 
+void PCISPH::initDensities() {
+
+}
+
+void PCISPH::initNormals() {
+
+}
+
+void PCISPH::initForces() {
+
+}
+
+void PCISPH::predictVelocityAndPosition() {
+
+}
+
+void PCISPH::updateDensityVarianceScale() {
+
+}
+
+void PCISPH::updatePressures() {
+
+}
+
+void PCISPH::updatePressureForces() {
+
+}
+
+void PCISPH::setVelocityAndPosition() {
+
+}
+
+void PCISPH::adjustParticles() {
+
+}
+
+void PCISPH::adjustTimestep() {
+
+}
+
+void PCISPH::detectShocks() {
+
+}
+
+void PCISPH::handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler) {
+
+}
 
 
+// @Func : This method implements algorithm 2 proposed in paper.
+void PCISPH::simulate(int maxIterations) {
 
+	buildFluidGrids();
+	testBoundary();
+	initDensities();
+	initNormals();
+	initForces();      // Compute F(v,g,ext)
 
+	int iterations = 0;
+    
+	while(iterations < maxIterations) {
+       predictVelocityAndPosition();
+       updateDensityVarianceScale();
+       updatePressures();
+       updatePressureForces();
+       if((++k >= MIN_ITERATION) && maximumDensityVariance < maximumDensityVarianceTh) {
+       	  break;
+       }
+	}
 
-
-
-
-
-
-
+	setVelocityAndPosition();
+	adjustParticles();
+	adjustTimestep();
+	detectShocks();
+ 
+	currentTime += timeStep;
+}
 
 // @Func  Initialize bounding boxes based on the parsed scene data.
 // @Tested : true
@@ -133,6 +244,14 @@ void PCISPH::allocMemory(int fluidSize, int boundarySize) {
     initBoundary();
 }
 
-
+// @Func  : Foward the simulation by deltaT from the current time
+//          and simulate this time interval.
+// @Tested : truefn
+void PCISPH::update(float deltaT) {
+	float targetTime = currentTime + deltaT;
+    while (currentTime < targetTime) {
+        simulate();
+    }
+}
 
 }
