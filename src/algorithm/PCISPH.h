@@ -11,22 +11,12 @@
 
 #include "Kernel.h"
 
-#include "visualization/scene/Scene.h"
 #include "visualization/grid/Grid.h"
-#include "visualization/mesh/Mesh.h"
-#include "visualization/objLoader/ObjLoader.h"
-#include "visualization/geometry/Voxelizer.h"
-#include "visualization/geometry/VoxelGrid.h"
-#include "visualization/particle/ParticleGenerator.h"
 
 #include "utils/STD.h"
 #include "utils/Vector.h"
 #include "utils/Box.h"
-#include "utils/AlignedAllocator.h"
-#include "utils/Timer.h"
 #include "utils/Math.h"
-#include "utils/ConcurrentUtils.h"
-#include "utils/Exception.h"
 #include "utils/ConcurrentUtils.h"
 
 #include <vector>

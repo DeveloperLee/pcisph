@@ -491,8 +491,8 @@ void PCISPH::allocMemory(int fluidSize, int boundarySize) {
     fluidPressureForces.resize(fluidSize);
     
     newFluidPosition.resize(fluidSize);
-	currentFluidVelocity.resize(fluidSize);
-	newFluidVelocity.resize(fluidSize);
+	  currentFluidVelocity.resize(fluidSize);
+	  newFluidVelocity.resize(fluidSize);
     
     fluidPositionBeforeShock.resize(fluidSize);
     fluidVelocityBeforeShock.resize(fluidSize);
@@ -500,7 +500,7 @@ void PCISPH::allocMemory(int fluidSize, int boundarySize) {
    
     // Boundary
     boundaryAlive.resize(boundarySize);
-	boundaryMass.resize(boundarySize);
+	  boundaryMass.resize(boundarySize);
     boundaryDensities.resize(boundarySize);
     boundaryPressures.resize(boundarySize);
     initBoundary();
