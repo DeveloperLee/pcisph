@@ -7,7 +7,6 @@
 #include <utils/vector.h>
 
 
-
 //============================================================
 // Constants
 //============================================================
@@ -51,6 +50,12 @@ typedef TBox<Vector1i>          Box1i;
 typedef TBox<Vector2i>          Box2i;
 typedef TBox<Vector3i>          Box3i;
 typedef TBox<Vector4i>          Box4i;
+
+// Define some useful data structures for storing
+// fluid/boundary particle properties and status.
+typedef std::vector<Vector3f>  PCI3Mf;
+typedef std::vector<float>     PCI1Mf;
+typedef std::vector<int>       PCI1Mi;
 
 typedef Eigen::Matrix<float,    Eigen::Dynamic, Eigen::Dynamic> Matrixf;
 typedef Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic> Matrixu;

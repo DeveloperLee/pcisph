@@ -37,17 +37,10 @@
 #define MIN_ITERATION 3
 #define EPSILON 1e-7f
 namespace cs224 {
-    
-    // Define some useful data structures for storing
-    // fluid/boundary particle properties and status.
-	typedef std::vector<Vector3f>  PCI3Mf;
-	typedef std::vector<float>     PCI1Mf;
-	typedef std::vector<int>       PCI1Mi;
-	typedef std::vector<Mesh>      PCIMeshM;
-
 
 class PCISPH {
 
+typedef std::vector<Mesh>   PCIMeshM;
 
 public: 
 
@@ -199,7 +192,7 @@ private:
      PCI3Mf fluidNormals;
 
      // Boundary particles:
-     PCI1Mi boundaryStatus;
+     PCI1Mi boundaryAlive;
      PCI1Mf boundaryMass;
      PCI1Mf boundaryDensities;
      PCI1Mf boundaryPressures;
