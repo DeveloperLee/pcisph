@@ -132,7 +132,55 @@ void PCISPH::initNormals() {
 
 }
 
+// In this implementation the initial force is mainly based on three components
+// 1. Viscosity
+// 2. Surface tension : Cohesive term + Curvature term
+// 3. Gravity : F = mg 
+// After calculating the intial force, set pressure and pressure force to 0
+// according to the PCISPH algorithm.
 void PCISPH::initForces() {
+
+	 ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
+	    
+	    // Terms for computing F(v,g,ext) in the paper algorithm.
+	    Vector3f viscocity;
+	    Vector3f cohesion; 
+	    Vector3f curvature; 
+	    
+	    // First of all, we have to iterate through the grid to fetch all 
+	    // adjacent particles that within the range of the kernel, which 
+	    // local at the center of the current particle.
+	    fluidGrid.query(kernelParams.radius, currentFluidPosition, currentFluidPosition[i], [&] (size_t j, const Vector3f &r, float r2) {
+	        
+	     
+	        if (r2 < EPSILON) {
+	            return;
+	        }
+	 
+	        float absxij = std::sqrt(r2);
+
+	        viscocity -= (currentFluidVelocity[i] - currentFluidVelocity[j]) * (W.viscosityLaplace(absxij) / fluidDensities[j]);
+	        
+	        // K(i,j) is the surface tension constant 
+	        // Basically F(sf) = K(i,j) * (F(cohesion)+F(curvature))
+	        float Kij = 2.f * simConstParams.restDensity / (fluidDensities[i] + fluidDensities[j]);
+	        cohesion += Kij * (r / absxij) * W.surfaceTension(absxij);
+	        curvature += Kij * (fluidNormals[i] - fluidNormals[j]);
+	    });
+
+	    viscocity *=  simConstParams.viscosity * particleParams.squaredMass * W.viscosityGrad2 / fluidDensities[i];
+	    cohesion  *= -simConstParams.surfaceTension * particleParams.squaredMass * W.surfaceTensionConstant;
+	    curvature *= -simConstParams.surfaceTension * particleParams.mass;
+	    
+	    // The overall force F(p,i)
+	    Vector3f force;
+	    force += cohesion + curvature + viscocity;
+	    force += particleParams.mass * simConstParams.gravity;
+
+	    fluidForces[i] = force;
+	    fluidPressures[i] = 0.f;
+	    fluidPressureForces[i] = Vector3f(0.f);
+	});
 
 }
 

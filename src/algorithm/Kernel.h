@@ -13,7 +13,6 @@
 
 #include "utils/STD.h"
 #include "utils/Vector.h"
-
 #include "utils/Math.h"
 
 #define PI 3.141593

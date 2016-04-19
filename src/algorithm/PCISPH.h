@@ -7,21 +7,35 @@
 /* Zihao Li 2016/4/16.
 **/
 
-#pragma once 
+#pragma once
+
+#include "Kernel.h"
+
+#include "visualization/scene/Scene.h"
+#include "visualization/grid/Grid.h"
+#include "visualization/mesh/Mesh.h"
+#include "visualization/objLoader/ObjLoader.h"
+#include "visualization/geometry/Voxelizer.h"
+#include "visualization/geometry/VoxelGrid.h"
+#include "visualization/particle/ParticleGenerator.h"
 
 #include "utils/STD.h"
 #include "utils/Vector.h"
 #include "utils/Box.h"
+#include "utils/AlignedAllocator.h"
+#include "utils/Timer.h"
+#include "utils/Math.h"
+#include "utils/ConcurrentUtils.h"
+#include "utils/Exception.h"
+#include "utils/ConcurrentUtils.h"
 
-#include <tbb/tbb.h>
 #include <vector>
 #include <numeric>
 
-#define PI 3.141593
+#define KERNEL_SCALE 4.f
 #define RELAX_ITERATION 10000
-#define MIN_ITERATIONS  3
+#define MIN_ITERATION 3
 #define EPSILON 1e-7f
-
 namespace cs224 {
     
     // Define some useful data structures for storing
