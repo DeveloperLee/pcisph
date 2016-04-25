@@ -2,6 +2,15 @@
 
 namespace cs224 {
 
+// @Func : Constructor of PCISPH class.
+//         1. Initialize simulation parameters (defined structs) based on settings.
+//		     2. Generate both fluid and boundary particles.
+//         3. Build Kernel.
+//         4. Initialize and build both fluid and boundary grids.
+//         5. Massify boundary particles.
+//         6. Do basic setup for the simulation.
+// @Params scene : parsed scene object.
+// @Tested : false
 SPH::SPH(const Scene &scene) {
 
     // Load scene settings
@@ -70,7 +79,11 @@ void SPH::update(float dt) {
     }
 }
 
-// Activate all boundary particles that are nearby fluid particles
+
+// @Func : Test the whether a boundary particle is alive.
+//         A boundary particle is considered alive iff
+//         it has at least one neighbour.
+//  @Tested : true
 void SPH::testBoundary() {
 
      ConcurrentUtils::ccLoop(boundaryPositions.size(), [this] (size_t i) {
@@ -86,7 +99,6 @@ void SPH::buildBoundaryGrids() {
     });
 }
 
-// Compute the approximate mass of boundary particles based on [4] equation 4 and 5
 void SPH::massifyBoundary() {
 
      ConcurrentUtils::ccLoop(boundaryPositions.size(), [this] (size_t i) {
@@ -98,6 +110,13 @@ void SPH::massifyBoundary() {
     });
 }
 
+
+// @Func : This function is used for initializing the fluid & boundary particle densities.
+//         This function will be called once per frame, before goes into correction loop.
+//         The density calculation is optimized for handling the fluid particles with deficient
+//         surronding fluid particle neighbours by taking the volume of surronding boundary particles
+//         into account.
+//         The volume of a boundary particle is defined as the weighted kernel sum of surrounding boundary particles.
 void SPH::initDensities() {
      
     // Calcuate the boundary particle densities
@@ -143,7 +162,11 @@ void SPH::initDensities() {
     });
 }
 
-// Compute normals based on [3]
+// @Func : Compute the normal of a fluid particle, the magnitude of the normal
+//         is proportional to its surface curvature, its value is close to 0
+//         for inner fluid particles and big at the surface area where the curvature
+//         is significant. The normal information will be used in computing force
+//         which can counteract the surface curvature.
 void SPH::initNormals() {
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [this] (size_t i) {
@@ -181,6 +204,8 @@ void SPH::handleCollisions(std::function<void(size_t i, const Vector3f &n, float
     }
 }
 
+// @Func : This function handles the situation when a particle collides with a
+//         boundary or fluid particle.
 void SPH::adjustParticles() {
 
     handleCollisions([&] (size_t i, const Vector3f &n, float d) {
@@ -198,10 +223,12 @@ void SPH::buildFluidGrids() {
     });
 }
 
-// This function calculates the density scaling factor that is applied to every 
-// particle in the current iteration, scaling factor is essential for dealing 
-// with the particles that have insufficient neighbours, which, otherwise would
-// produce falsified results.
+// @Func : This function calculates the density scaling factor that is applied to every
+//         particle in the current iteration, scaling factor is essential for dealing
+//         with the particles that have insufficient neighbours, which, otherwise would
+//         produce falsified results. The density vairance scale factor is generally based
+//         on all neighbour particles within the same kernel.
+//         The density variance scale factor will be updated in each iteration.
 void SPH::updateDensityVarianceScale() {
    
    Vector3f gradientSum = Vector3f(0.f,0.f,0.f);
@@ -228,7 +255,7 @@ void SPH::updateDensityVarianceScale() {
 // In this implementation the initial force is mainly based on three components
 // 1. Viscosity
 // 2. Surface tension : Cohesive term + Curvature term
-// 3. Gravity : F = mg 
+// 3. Gravity : F = mg
 // After calculating the intial force, set pressure and pressure force to 0
 // according to the PCISPH algorithm.
 void SPH::initForces() {
@@ -274,6 +301,12 @@ void SPH::initForces() {
 	});
 }
 
+// @Func : This function predicts the velocity and position of the current particle
+//         at the next time step.
+// @Govern equation : F(net) = ma (F is the net force that affects on the current particle)
+//                    F(net) = surface tension + gravity + pressure force + viscosity.
+//                    v(new) = v(old) + a * dt
+//                    x(new) = x(old) + v * dt
 void SPH::predictVelocityAndPosition() {
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
@@ -313,6 +346,9 @@ void SPH::updatePressures() {
 
 }
 
+
+// @Func : Update the pressure force based on the equation
+//         provided in paper.
 void SPH::updatePressureForces() {
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
@@ -350,8 +386,12 @@ void SPH::updatePressureForces() {
     });
 }
 
-// This is the final step of the algorithm, which updates particle's 
-// position and velocity based on the result of the current iteration.
+
+// @Func : Set the new fluid position and velocity
+//         This function is called after the PCISPH
+//         loop is terminated.
+//         After set the new positions and velocities,
+//         swap the current and predicted buffer.
 void SPH::setVelocityAndPosition() {
     
     Thread_float maxVelocity(0.f);
@@ -373,6 +413,10 @@ void SPH::setVelocityAndPosition() {
     std::swap(newFluidVelocity, currentFluidVelocity);
 }
 
+
+// @Func : 1. Relax the initial particle distributions.
+//         2. Reset clocks.
+// @Tested : true
 void SPH::relax() {
 
      // Relax initial particle distribution and reset velocities
@@ -384,6 +428,12 @@ void SPH::relax() {
     timeBeforeShock = 0.f;
 }
 
+// @Func : Setup the simulation
+//       1. Initialize particle densities.
+//       2. Initialize position and velocity buffers for shocks.
+//       3. Relax the particle distributions.
+//       4. Reset clocks.
+// @Tested : true
 void SPH::basicSimSetup() {
 
     initDensities();
@@ -475,6 +525,10 @@ void SPH::simulate(int maxIterations) {
     currentTime += timeStep;
 }
 
+
+// @Func : Build the simulation scene based on the parsed scene file.
+// @Params scene : parsed scene object.
+// @Tested : false
 void SPH::buildScene(const Scene &scene) {
 
     for (const auto &sceneBox : scene.boxes) {
@@ -484,7 +538,7 @@ void SPH::buildScene(const Scene &scene) {
             break;
         case Scene::Boundary:
             generateBoundaryParticles(ParticleGenerator::generateBoundaryBox(sceneBox.bounds, particleParams.radius));
-//            boundaryMeshes.emplace_back(Mesh::createBox(sceneBox.bounds));
+            //boundaryMeshes.emplace_back(Mesh::createBox(sceneBox.bounds));
             break;
         }
     }
@@ -524,6 +578,4 @@ void SPH::generateBoundaryParticles(const ParticleGenerator::Boundary &boundary)
     boundaryNormals.insert(boundaryNormals.end(), boundary.normals.begin(), boundary.normals.end());
 }
 
-
-
-} 
+} //namespace cs224
