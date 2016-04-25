@@ -27,6 +27,10 @@ GLWidget::GLWidget(QGLFormat format, QWidget *parent) :
     m_zoom(10.f) {
 
     m_viewPort = Eigen::Vector2i(1280, 720);
+
+    // start timer
+    connect(&m_timer, SIGNAL(timeout()), this, SLOT(refresh()));
+    m_timer.start(1000.f / 10.f);   // fps: 10
 }
 
 GLWidget::~GLWidget() {
@@ -187,7 +191,5 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
 }
 
 void GLWidget::refresh() {
-    while (true) {
-        m_sph->simulate();
-    }
+//    if (m_sph) m_sph->simulate();
 }

@@ -70,8 +70,6 @@ protected:
     void wheelEvent(QWheelEvent *e);
 
 private:
-    void refresh();
-
     // camera parameters
     Eigen::Vector2i m_viewPort;
     Eigen::Vector3f m_position;
@@ -101,6 +99,9 @@ private:
     cs224::CameraUtils::Arcball *m_arcball;
 
     bool m_leftButton = false;
+
+private slots:
+    void refresh();
 };
 
 
