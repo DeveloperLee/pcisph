@@ -1,0 +1,28 @@
+{
+    "settings" : {
+        "method" : "pcisph",
+        "particleRadius" : 0.01,
+        "restDensity" : 1000.0,
+        "soundSpeed" : 300.0,
+        "surfaceTension" : 0.25,
+        "viscosity" : 1.0,
+        "timeStep" : 0.005,
+        "gravity" : [0,0,0]
+    },
+    "scene" : {
+        "camera" : {
+            "position" : [0,0,1.5],
+            "target" : [0,0,0]
+        },
+        "world" : {
+            "bounds" : [[-1,-1,-1],[1,1,1]]
+        },
+        "meshes" : [
+            {
+                "filename" : "/Users/EricLee/Desktop/pbs/scenes/meshes/bowl.obj",
+                "type" : "fluid",
+                "position" : [0, 1.5, 0]
+            }
+        ]
+    }
+}
