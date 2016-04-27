@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "visualization/scene/Scene.h"
 
+
 namespace cs224 {
 
 static inline MatrixXf toMatrix(const std::vector<Vector3f> &data) {
@@ -34,6 +35,7 @@ void Engine::initShaders() {
     m_domainShader.reset(new DomainShader());
     m_particleShader.reset(new ParticleShader());
     m_fluidMeshShader.reset(new MeshShader());
+    m_SSFRenderer.reset(new SSFRenderer());
 
 }
 
@@ -58,9 +60,19 @@ void Engine::loadScene(const std::string &path, const json11::Json &settings) {
     }
 }
 
-void Engine::updateStep() {
+void Engine::onKeyPress(int key)
+{
+    m_SSFRenderer->onKeyPress(key);
+}
 
+void Engine::onKeyReleased(int key)
+{
+    m_SSFRenderer->onKeyReleased(key);
+}
+
+void Engine::updateStep() {
     m_sph->simulate();
+
 }
 
 void Engine::render() {
@@ -69,20 +81,26 @@ void Engine::render() {
 
     Eigen::Matrix4f view = m_camera.viewMatrix();
     Eigen::Matrix4f proj = m_camera.projectionMatrix();
-    Eigen::Matrix4f mv = view;
-    Eigen::Matrix4f mvp = proj * view;
+    float particleRadius = m_sph->getParticleParams().radius;
 
-    float particleRadius = m_sph->getParticleParams().radius; 
+    if(renderMode){
+        Eigen::Matrix4f mv = view;
+        Eigen::Matrix4f mvp = proj * view;
 
-    // Draw world bounding box
-    m_domainShader->draw(mvp, m_sph->getBounds());
 
-    // Draw particle spheres
-    m_particleShader->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),Eigen::Vector4f(0.8f, 0.54f, 0.54f, 1.f), particleRadius * 2);
 
-    // Draw boundary meshes
-    for (const auto &shader : m_boundaryMeshShader) {
-        shader->draw(mvp, Eigen::Vector4f(0.32f, 0.32f, 0.81f, 1.f));
+        // Draw world bounding box
+        m_domainShader->draw(mvp, m_sph->getBounds());
+
+        // Draw particle spheres
+        m_particleShader->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),Eigen::Vector4f(0.8f, 0.54f, 0.54f, 1.f), particleRadius * 2);
+
+        // Draw boundary meshes
+        for (const auto &shader : m_boundaryMeshShader) {
+            shader->draw(mvp, Eigen::Vector4f(0.32f, 0.32f, 0.81f, 1.f));
+        }
+    }else{
+        m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),Eigen::Vector4f(0.8f, 0.54f, 0.54f, 1.f), particleRadius * 2);
     }
 }
 

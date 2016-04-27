@@ -4,6 +4,6 @@ file(REMOVE_RECURSE
 )
 
 # Per-language clean rules from dependency scanning.
-foreach(lang C)
+foreach(lang)
   include(CMakeFiles/glfw.dir/cmake_clean_${lang}.cmake OPTIONAL)
 endforeach()

@@ -67,7 +67,7 @@ public:
         glUniform4f(getUnifLocation(name), v.x(), v.y(), v.z(), v.w());
     }
 
-
+GLuint m_program;
 protected:
 
 	void updateBindings(const std::string &name, uint32_t size, int dim,
@@ -93,7 +93,7 @@ protected:
     GLuint m_vertexShader;
     GLuint m_fragmentShader;
     GLuint m_geometryShader;
-    GLuint m_program;
+
     GLuint m_vao;
     std::map<std::string, Buffer> m_vboCache;
 

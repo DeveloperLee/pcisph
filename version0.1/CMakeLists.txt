@@ -140,13 +140,17 @@ add_library(core STATIC
     src/utils/ConcurrentUtils.h
     src/utils/Def.h
     src/utils/Settings.h src/utils/Settings.cpp
+    src/utils/ResourceLoader.h src/utils/ResourceLoader.cpp
 
     src/engine/camera/Camera.h src/engine/camera/Camera.cpp
     src/engine/Engine.h src/engine/Engine.cpp
   
     src/shading/PCIShader.h src/shading/PCIShader.cpp
+    src/shading/FBO.h src/shading/FBO.cpp
+    src/shading/shape.h src/shading/shape.cpp
     src/shading/DomainShader.h
     src/shading/ParticleShader.h
+    src/shading/SSFRenderer.h
     src/shading/MeshShader.h
 
     src/gui/Window.h

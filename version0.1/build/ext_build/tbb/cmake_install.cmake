@@ -1,4 +1,4 @@
-# Install script for directory: /Users/LOVEME/Desktop/copy/packages/tbb
+# Install script for directory: /gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/packages/tbb
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -27,15 +27,16 @@ if(NOT CMAKE_INSTALL_COMPONENT)
   endif()
 endif()
 
-if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/Users/LOVEME/Desktop/copy/build/ext_build/tbb/libtbb_static.a")
-  if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtbb_static.a" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtbb_static.a")
-    execute_process(COMMAND "/Users/LOVEME/Desktop/copy/packages/tbb/build/ranlib_filter.sh" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libtbb_static.a")
-  endif()
+# Install shared libraries without execute permission?
+if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
+  set(CMAKE_INSTALL_SO_NO_EXE "1")
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE DIRECTORY FILES "/Users/LOVEME/Desktop/copy/packages/tbb/include/tbb")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/build/ext_build/tbb/libtbb_static.a")
+endif()
+
+if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE DIRECTORY FILES "/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/packages/tbb/include/tbb")
 endif()
 

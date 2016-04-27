@@ -33,7 +33,7 @@ static bool main_active = false;
 
 // Start the GLFW Event loop
 void startGuiLoop(int refresh, GLWidget *screen) {
-
+    std::cout << "main loop started" << std::endl;
     if (main_active) {
         throw std::runtime_error("Main loop already started!");
     }
@@ -59,14 +59,14 @@ void startGuiLoop(int refresh, GLWidget *screen) {
 
     try {
         while (main_active) {
-            if (glfwWindowShouldClose(screen->glfwWindow())) {
-                screen->setVisible(false);
-                main_active = false;
-                break;
-            } else if (!screen->visible()) {
-                main_active = false;
-                break;
-            }
+             if (glfwWindowShouldClose(screen->glfwWindow())) {
+                 screen->setVisible(false);
+                 main_active = false;
+                 break;
+             } /*else if (!screen->visible()) {
+                 main_active = false;
+                 break;
+             }*/
             
             screen->draw();
 

@@ -15,6 +15,8 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <memory>
+#include <algorithm>
 
 #include "Math.h"
 

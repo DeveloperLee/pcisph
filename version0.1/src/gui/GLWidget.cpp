@@ -1,6 +1,9 @@
 #include "GLWidget.h"
 
 namespace cs224 {
+
+Engine cs224::GLWidget::m_engine;
+
 GLWidget::GLWidget(){
 
 	/* Request a forward compatible OpenGL 3.3 core profile context */
@@ -42,9 +45,9 @@ GLWidget::GLWidget(){
 
     m_visible = glfwGetWindowAttrib(m_window, GLFW_VISIBLE) != 0;
     
-    m_engine.initShaders();
-	m_engine.setResolution(m_windowSize, m_windowSize);
-	m_engine.loadScene("/Users/LOVEME/Desktop/pbs/scenes/test.json");
+    GLWidget::m_engine.initShaders();
+    GLWidget::m_engine.setResolution(m_windowSize, m_windowSize);
+    GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test.json");
 
 	setupCallbacks();
 }
@@ -78,31 +81,31 @@ void GLWidget::draw() {
 void GLWidget::refresh() {
 
 	if (running) {
-	  m_engine.updateStep();
+      GLWidget::m_engine.updateStep();
 	  glfwPostEmptyEvent();
 	}
 
-    m_engine.render();
+    GLWidget::m_engine.render();
 }
 
-void GLWidget::keyboardEvent(int key, int scancode, int action, int modifiers) {
-    if (action == GLFW_PRESS) {
-        switch (key) {
-        case GLFW_KEY_ESCAPE:
-            glfwHideWindow(m_window);
-            break;
-        case GLFW_KEY_SPACE:
-            running = !running;
-            break;
-        case GLFW_KEY_F:
-            if (modifiers & GLFW_MOD_SHIFT) {
-                m_engine.viewOptions().showFluidMesh = !m_engine.viewOptions().showFluidMesh;
-            } else {
-                m_engine.viewOptions().showFluidParticles = !m_engine.viewOptions().showFluidParticles;
-            }
-            break;
-        }
-    }
-}
+//void GLWidget::keyboardEvent(int key, int scancode, int action, int modifiers) {
+//    if (action == GLFW_PRESS) {
+//        switch (key) {
+//        case GLFW_KEY_ESCAPE:
+//            glfwHideWindow(m_window);
+//            break;
+//        case GLFW_KEY_SPACE:
+//            running = !running;
+//            break;
+//        case GLFW_KEY_F:
+//            if (modifiers & GLFW_MOD_SHIFT) {
+//               GLWidget::m_engine.viewOptions().showFluidMesh = !GLWidget::m_engine.viewOptions().showFluidMesh;
+//            } else {
+//                GLWidget::m_engine.viewOptions().showFluidParticles = !GLWidget::m_engine.viewOptions().showFluidParticles;
+//            }
+//            break;
+//        }
+//    }
+//}
 
 } // namespace cs224

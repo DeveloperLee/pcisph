@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 
 namespace cs224 {
 namespace StringUtils {
