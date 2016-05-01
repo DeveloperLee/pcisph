@@ -1,6 +1,7 @@
 #include "SSFRenderer.h"
 
 #include "shape.h"
+#include "SOIL.h"
 
 namespace cs224{
 
@@ -11,6 +12,10 @@ SSFRenderer::SSFRenderer() : m_depthFBO(0,1300,700,false,true),
                             m_cfFBO2(0,1300,700,false,true),
                             m_thicknessFBO(1,1300,700,true,false)
 {
+//    std::string image_location = base_directory+"packages/soil/img_test.png";
+//    GLuint id = SOIL_load_OGL_texture(image_location.c_str(),SOIL_LOAD_AUTO,SOIL_CREATE_NEW_ID,SOIL_FLAG_MIPMAPS);
+//    std::cout << id << std::endl;
+
 
     // shader programs
     const std::string vert_str = ResourceLoader::fileToString(base_directory+"shaders/particle.vert");
@@ -161,7 +166,7 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
 
     //m_blurVertFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-    glClearColor(.8,.8,.8,1);
+    //glClearColor(.8,.8,.8,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0,0,0,1);
 

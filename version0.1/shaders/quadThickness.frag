@@ -60,6 +60,30 @@ void main() {
     vec3 specular_color = vec3(specular_amount);
 
     fragColor = vec4(ambient_color+specular_color,clamp(thick,0,1));
+
+
+    //fresnel
+    vec3 n = normal;
+    vec3 eyeToVertex = normalize(eyepos);
+    vec3 E = vec3(0,0,1);
+    vec3 vertexToEye = -eyeToVertex;
+    float r0 = .02;
+    float F = r0 + (1.f-r0)*pow((1-dot(vertexToEye,n)),5);
+
+    vec3 alpha = mix(water_color,vec3(0,0,0),exp(-thick));
+    vec3 refracted = alpha*(1-F);
+
+    vec3 beta = vec3(1,1,1);
+    beta = mix(beta,vec3(0,0,0),exp(-thick));
+    vec3 reflected = beta*F;
+
+    vec3 l = normalize(light_pos_view_space.xyz - eyepos);
+    vec3 H = normalize(l+vertexToEye);
+    specular_color = vec3(1)* pow(clamp(dot(n,H),0,1),30);
+
+    fragColor = vec4(refracted + reflected + specular_color ,1);
+
+
    //fragColor = particleColor;
     //fragColor = vec4(1,1,0,1);
     //fragColor = vec4(vec3(thick),1 );
