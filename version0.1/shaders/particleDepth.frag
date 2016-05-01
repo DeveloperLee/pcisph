@@ -3,6 +3,7 @@ uniform vec4 color;
 in vec2 gPosition;
 uniform float particleRadius;
 layout (location = 0) out vec4 position;
+flat in int vert_num;
 void main() {
     vec3 n = vec3(2.0 * gPosition, 0.0);
     float r2 = dot(n.xy, n.xy);
@@ -12,5 +13,5 @@ void main() {
     float d = max(0.0, dot(L, n));
     //out_color = vec4(d * color.xyz, color.w);
     gl_FragDepth=gl_FragCoord.z - normalize(n).z*particleRadius;
-    position=vec4(gl_FragCoord.xy/vec2(700,1300),0,1);
+    position=vec4(vec2(float(vert_num) / 10000.),0,1);
 }

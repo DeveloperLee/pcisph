@@ -1,10 +1,10 @@
 #version 430
 uniform vec4 color;
+uniform sampler2D depthTexture;
 in vec2 gPosition;
 uniform float particleRadius;
-layout (location = 0) out vec4 thickness;
+layout (location = 0) out vec4 position;
 flat in int vert_num;
-
 
 float snoise(vec3 v);
 
@@ -15,8 +15,9 @@ void main() {
     n.z = sqrt(1.0 - r2);
     vec3 L = normalize(vec3(1.0));
     float d = max(0.0, dot(L, n));
-    n = normalize(n);
-    thickness=vec4(vec3(n.z)*.1,snoise(vec3(1,1,vert_num)));
+    //out_color = vec4(d * color.xyz, color.w);
+    gl_FragDepth=gl_FragCoord.z - normalize(n).z*particleRadius;
+    position=vec4(vec2(snoise(vec3(0,0,vert_num))),0,1);
 }
 
 

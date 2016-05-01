@@ -19,8 +19,8 @@ struct SSFRenderer {
     void onKeyReleased(int key);
 
 private:
-    FBO m_depthFBO,m_blurVertFBO,m_blurHorizFBO,m_cfFBO1,m_cfFBO2,m_thicknessFBO;
-    PCIShader shader,m_thicknessShader;
+    FBO m_depthFBO,m_blurVertFBO,m_blurHorizFBO,m_cfFBO1,m_cfFBO2,m_thicknessFBO,m_noiseFBO;
+    PCIShader shader,m_thicknessShader, m_noiseShader;
     GLuint m_blurShader,m_curvatureFlowShader,m_quadThicknessShader;
     float near = .05;
     float far = 1.2f;

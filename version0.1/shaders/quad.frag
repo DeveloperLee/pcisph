@@ -18,7 +18,7 @@ vec3 uvToEye(vec2 texCoord) {
 void main() {
     if(0<1){
         //just color
-        fragColor = texture(tex,uv);
+        fragColor = texture(tex,uv).aaaa;
         //scaled to see depth
         float n = near;
         float f = far;

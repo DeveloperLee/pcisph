@@ -5,12 +5,13 @@
 
 namespace cs224{
 
-SSFRenderer::SSFRenderer() : m_depthFBO(0,1300,700,false,true),
+SSFRenderer::SSFRenderer() : m_depthFBO(1,1300,700,true,true),
                             m_blurHorizFBO(1,1300,700,true,false),
                             m_blurVertFBO(1,1300,700,true,false),
                             m_cfFBO1(0,1300,700,false,true),
                             m_cfFBO2(0,1300,700,false,true),
-                            m_thicknessFBO(1,1300,700,true,false)
+                            m_thicknessFBO(1,1300,700,true,false),
+                            m_noiseFBO(1,1300,700,true,false)
 {
 //    std::string image_location = base_directory+"packages/soil/img_test.png";
 //    GLuint id = SOIL_load_OGL_texture(image_location.c_str(),SOIL_LOAD_AUTO,SOIL_CREATE_NEW_ID,SOIL_FLAG_MIPMAPS);
@@ -22,12 +23,15 @@ SSFRenderer::SSFRenderer() : m_depthFBO(0,1300,700,false,true),
 
     const std::string frag_str = ResourceLoader::fileToString(base_directory+"shaders/particleDepth.frag");
     const std::string frag_thickness_str = ResourceLoader::fileToString(base_directory+"shaders/particleThickness.frag");
+    const std::string frag_noise_str = ResourceLoader::fileToString(base_directory+"shaders/particleNoise.frag");
 
     const std::string geo_str = ResourceLoader::fileToString(base_directory+"shaders/particle.geo");
 
     shader.buildShader("SSF", vert_str, frag_str, geo_str);
 
     m_thicknessShader.buildShader("SSFThickness", vert_str, frag_thickness_str, geo_str);
+
+    m_noiseShader.buildShader("SSFNoise", vert_str, frag_noise_str, geo_str);
 
 
 
@@ -95,7 +99,6 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     shader.setUniform("mv", mv);
     shader.setUniform("proj", proj);
     shader.setUniform("particleRadius", particleRadius);
-    //shader.setUniform("color", color);
     glUniform4f(glGetUniformLocation(shader.m_program,"color"),color.x(),color.y(),color.z(),1);
     glEnable(GL_DEPTH_TEST);
     shader.draw(GL_POINTS, 0, positions.cols(), 1);
@@ -108,7 +111,6 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     m_thicknessShader.setUniform("mv", mv);
     m_thicknessShader.setUniform("proj", proj);
     m_thicknessShader.setUniform("particleRadius", particleRadius);
-    //shader.setUniform("color", color);
     glUniform4f(glGetUniformLocation(m_thicknessShader.m_program,"color"),color.x(),color.y(),color.z(),1);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -116,10 +118,12 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     m_thicknessShader.draw(GL_POINTS, 0, positions.cols(), 1);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-
     m_thicknessFBO.unBind();
 
-    m_thicknessFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
+    //noise pass
+
+
+
 
     m_blurHorizFBO.Bind();
     glUseProgram(m_blurShader);
@@ -168,7 +172,7 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
     //glClearColor(.8,.8,.8,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0,0,0,1);
+    glClearColor(0,0,0,0);
 
 
     glUseProgram(m_quadThicknessShader);
@@ -205,9 +209,9 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
 
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    m_quad->draw();
+    //m_quad->draw();
 
-
+    m_thicknessFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
 
 }
 
