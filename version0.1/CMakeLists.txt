@@ -26,7 +26,7 @@ if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/packages/glfw")
     message(FATAL_ERROR "glfw library not found, please add it into packages")
 endif()
 
-# check glfw library
+# check soil library
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/packages/soil")
     message(FATAL_ERROR "soil library not found, please add it into packages")
 endif()
@@ -111,6 +111,9 @@ set(TBB_BUILD_TBBMALLOC OFF CACHE BOOL " " FORCE)
 set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/packages/tbb ext_build/tbb)
 
+# Build SOIL
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/packages/soil ext_build/soil)
+
 include_directories(
     # Source
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -130,6 +133,7 @@ include_directories(
     # json11
     ${CMAKE_CURRENT_SOURCE_DIR}/packages/json11
 
+    # soil
     ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/src
     
     # Resource file
@@ -141,14 +145,6 @@ include_directories(
 # Create config file and add to include directories
 configure_file("${PROJECT_SOURCE_DIR}/src/app/Config.h.in" "${PROJECT_BINARY_DIR}/Config.h")
 include_directories(${PROJECT_BINARY_DIR})
-
-ADD_LIBRARY( SOIL STATIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/src/image_helper.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/src/stb_image_aug.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/src/image_DXT.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/src/SOIL.c
-  )
-
 
 add_library(core STATIC
   
@@ -199,8 +195,7 @@ add_library(core STATIC
     
     ${PLATFORM_EXTRA_SOURCE}
 )
-target_link_libraries(SOIL ${CMAKE_CURRENT_SOURCE_DIR}/packages/soil/build/libSOIL.a)
-target_link_libraries(core tbb_static glfw ${PLATFORM_EXTRA_LIBS})
+target_link_libraries(core tbb_static glfw SOIL ${PLATFORM_EXTRA_LIBS})
 
 add_executable(fluid_simulator #MACOSX_BUNDLE
     #resources.h resources.cpp

@@ -3,14 +3,9 @@ project (SOIL)
 
 set (SOIL_BUILD_TESTS false CACHE BOOL "Build tests")
 
-if(ANDROID)
-  # Android requires GL ES 2.0 package automatically
-  set(LIBRARIES GLESv2)
-else()
-  find_package (OpenGL REQUIRED)
-  include_directories (${OPENGL_INCLUDE_DIR})
-  set(LIBRARIES ${OPENGL_LIBRARIES})
-endif()
+find_package (OpenGL REQUIRED)
+include_directories (${OPENGL_INCLUDE_DIR})
+set(LIBRARIES ${OPENGL_LIBRARIES})
 
 file (GLOB SOIL_SOURCES src/*.c)
 file (GLOB SOIL_HEADERS src/*.h)
