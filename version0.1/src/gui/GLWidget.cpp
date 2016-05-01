@@ -34,7 +34,7 @@ GLWidget::GLWidget(){
 
     glfwGetFramebufferSize(m_window, &m_size[0], &m_size[1]);
     glViewport(0, 0, m_size[0], m_size[1]);
-    glClearColor(0.4f, 0.4f, 0.4f, 0.4f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glfwSwapInterval(0);
     glfwSwapBuffers(m_window);

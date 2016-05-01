@@ -1,4 +1,6 @@
 #include "ResourceLoader.h"
+#include <fstream>
+#include <streambuf>
 
 
 namespace cs224{
@@ -141,5 +143,13 @@ namespace cs224{
         glDeleteShader(FragmentShaderID);
 
         return programId;
+    }
+
+    std::string ResourceLoader::fileToString(std::string filename)
+    {
+        std::ifstream t(filename);
+        std::string str((std::istreambuf_iterator<char>(t)),
+                        std::istreambuf_iterator<char>());
+        return str;
     }
 }

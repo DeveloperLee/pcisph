@@ -127,6 +127,8 @@ include_directories(
     
     # Resource file
     ${CMAKE_CURRENT_BINARY_DIR}
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders
 )
 
 # Create config file and add to include directories
@@ -150,8 +152,13 @@ add_library(core STATIC
     src/shading/shape.h src/shading/shape.cpp
     src/shading/DomainShader.h
     src/shading/ParticleShader.h
-    src/shading/SSFRenderer.h
+    src/shading/SSFRenderer.h src/shading/SSFRenderer.cpp
     src/shading/MeshShader.h
+
+    shaders/quad.vert
+    shaders/quad.frag
+    shaders/blur.vert
+    shaders/blur.frag
 
     src/gui/Window.h
     src/gui/GLWidget.h src/gui/GLWidget.cpp

@@ -5,7 +5,7 @@
 
 namespace cs224 {
 
-    FBO::FBO(int num_color_attachments, int sizex, int sizey, bool render_buffer, bool depth_attachment){
+    FBO::FBO(int num_color_attachments, int sizex, int sizey, bool render_buffer, bool depth_attachment):has_depth_attachment(depth_attachment){
         glGenFramebuffers(1,&m_FBOID);
         glBindFramebuffer(GL_FRAMEBUFFER,m_FBOID);
 
@@ -54,68 +54,14 @@ namespace cs224 {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        m_quad.reset(new Shape());
-        GLfloat quadData[30] = {
-            -1.f,1.f,0.f, 0.f,1.f,
-            -1.f,-1.f,0.f, 0.f,0.f,
-            1.f,1.f,0.f, 1.f,1.f,
-            1.f,1.f,0.f, 1.f,1.f,
-            -1.f,-1.f,0.f, 0.f,0.f,
-            1.f,-1.f,0.f, 1.f,0.f
 
-        };
-        m_quad->setVertexData(quadData,sizeof(quadData),GL_TRIANGLES,6);
-        m_quad->setAttribute(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat) * 5,0);
-        m_quad->setAttribute(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat) * 5, (sizeof(GLfloat) * 3));
 
 
         //init quad shader
 
-        const std::string vert_str = "#version 330\n"
-                     "layout(location = 0) in vec3 position;\n"
-                     "layout(location = 1) in vec2 inUV;\n"
-                     "out vec2 uv;\n"
-                     "void main() {\n"
-                     "    uv = inUV;\n"
-                     "    gl_Position = vec4(position, 1.0);\n"
-                     "}";
+        const std::string vert_str = ResourceLoader::fileToString(base_directory+"shaders/quad.vert");
 
-        const std::string frag_str = "#version 330\n"
-                   "uniform sampler2D tex;\n"
-                   "in vec2 uv;\n"
-                   "out vec4 fragColor;\n"
-                   "uniform float near;\n"
-                   "uniform float far;\n"
-                   "uniform mat4 proj;\n"
-                   "vec3 uvToEye(vec2 texCoord) {\n"
-                   "   float depth = texture(tex,texCoord).x;\n"
-                   "   vec2 transUV = (texCoord - vec2(.5))*2;\n"
-                   "   vec4 sscoord = vec4(transUV,depth,1);\n"
-                   "   mat4 invproj = inverse(proj);\n"
-                   "   vec4 eyepos = invproj * sscoord;\n"
-                   "   return eyepos.xyz/eyepos.w;\n"
-                   "}\n"
-                   "void main() {\n"
-                   "    if(1<0){\n"
-                   "        fragColor = texture(tex,uv);\n"
-                   "    }else{\n"
-                   "        vec2 texelSize = 1.0 / textureSize(tex,0).xy;\n"
-                   "        float n = near;\n"
-                   "        float f = far;\n"
-                   "        float z = texture(tex,uv).x;\n"
-                   "        //z = (2.0 * n) / (f + n - z * (f - n));\n"
-                   "        vec3 eyepos = uvToEye(uv);\n"
-                   "        vec3 ddx = uvToEye(uv+vec2(texelSize.x,0)) - eyepos;\n"
-                   "        vec3 ddx2 = eyepos - uvToEye(uv-vec2(texelSize.x,0));\n"
-                   "        vec3 ddy = uvToEye(uv+vec2(0,texelSize.y))-eyepos;\n"
-                   "        vec3 ddy2 = eyepos - uvToEye(uv-vec2(0,texelSize.y));\n"
-                   "        vec3 norm = cross(ddx,ddy);\n"
-                   "        fragColor = vec4((normalize(norm)+1.)/2.,1);\n"
-                   "        //fragColor = vec4(z,z,z,1);\n"
-                   "        //fragColor = texture(tex,uv);\n"
-                   "    }\n"
-                   "}";
-
+        const std::string frag_str = ResourceLoader::fileToString(base_directory+"shaders/quad.frag");
 
         m_quadShader = ResourceLoader::loadShadersFromText(vert_str.c_str(),frag_str.c_str());
     }
@@ -138,7 +84,27 @@ namespace cs224 {
         glBindFramebuffer(GL_FRAMEBUFFER,0);
     }
 
-    void FBO::renderTextureToFullScreen(int tex_attachment, bool depth, const Eigen::Matrix4f &mat, float near=0, float far=0)
+    GLuint FBO::getDepthTexture()
+    {
+        if(has_depth_attachment){
+            return m_depthtex;
+        }else{
+            std::cout << "depth texture requested but doesnt have one";
+            return 0;
+        }
+    }
+
+    GLuint FBO::getColorTexture(int tex_attachment)
+    {
+        if(tex_attachment>=m_texIDs.size()){
+            std::cout << "no color attachment to get" << std::endl;
+            return 0;
+        }else{
+            return m_texIDs[tex_attachment];
+        }
+    }
+
+    void FBO::renderTextureToFullScreen(int tex_attachment, bool depth, const Eigen::Matrix4f &mat,const Eigen::Matrix4f &v,Shape *quad, float near=0, float far=0)
     {
         GLuint texture_to_render;
         if(depth){
@@ -163,11 +129,12 @@ namespace cs224 {
         glUniform1f(glGetUniformLocation(m_quadShader,"near"),near);
         glUniform1f(glGetUniformLocation(m_quadShader,"far"),far);
         glUniformMatrix4fv(glGetUniformLocation(m_quadShader,"proj"),1,GL_FALSE,mat.data());
+        glUniformMatrix4fv(glGetUniformLocation(m_quadShader,"view"),1,GL_FALSE,v.data());
 
         glBindTexture(GL_TEXTURE_2D, texture_to_render);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-        m_quad->draw();
+        quad->draw();
 
 
     }

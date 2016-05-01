@@ -14,14 +14,17 @@ public:
     ~FBO();
     void Bind();
     void unBind();
-    void renderTextureToFullScreen(int tex_attachment, bool depth, const Eigen::Matrix4f &mat, float near, float far);
+    GLuint getDepthTexture();
+    GLuint getColorTexture(int tex_attachment);
+    void renderTextureToFullScreen(int tex_attachment, bool depth, const Eigen::Matrix4f &mat,const Eigen::Matrix4f &v, Shape *quad,float near, float far);
 private:
     GLuint m_FBOID;
     std::vector<GLuint> m_texIDs;
     GLuint m_RBID;
     GLuint m_depthtex;
     GLuint m_quadShader;
-    std::unique_ptr<Shape> m_quad;
+
+    bool has_depth_attachment;
 };
 
 } // namespace cs224

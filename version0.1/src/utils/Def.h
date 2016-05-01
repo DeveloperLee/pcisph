@@ -22,6 +22,8 @@
 
 namespace cs224 {
 
+const std::string base_directory = "/home/sj4/course/cs224final/pcisph/version0.1/";
+
 #define PI 3.1415926536
 
 template <typename T> struct CPP2GL_types;
