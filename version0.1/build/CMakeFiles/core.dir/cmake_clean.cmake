@@ -1,8 +1,12 @@
 file(REMOVE_RECURSE
   "CMakeFiles/core.dir/src/utils/Settings.cpp.o"
+  "CMakeFiles/core.dir/src/utils/ResourceLoader.cpp.o"
   "CMakeFiles/core.dir/src/engine/camera/Camera.cpp.o"
   "CMakeFiles/core.dir/src/engine/Engine.cpp.o"
   "CMakeFiles/core.dir/src/shading/PCIShader.cpp.o"
+  "CMakeFiles/core.dir/src/shading/FBO.cpp.o"
+  "CMakeFiles/core.dir/src/shading/shape.cpp.o"
+  "CMakeFiles/core.dir/src/shading/SSFRenderer.cpp.o"
   "CMakeFiles/core.dir/src/gui/GLWidget.cpp.o"
   "CMakeFiles/core.dir/src/visualization/mesh/Mesh.cpp.o"
   "CMakeFiles/core.dir/src/visualization/objLoader/ObjLoader.cpp.o"
