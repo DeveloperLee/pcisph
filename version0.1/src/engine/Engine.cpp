@@ -35,7 +35,7 @@ void Engine::initShaders() {
     m_domainShader.reset(new DomainShader());
     m_particleShader.reset(new ParticleShader());
     m_fluidMeshShader.reset(new MeshShader());
-    m_SSFRenderer.reset(new SSFRenderer());
+    m_SSFRenderer.reset(new SSFRenderer(m_size));
 
 }
 
@@ -62,16 +62,76 @@ void Engine::loadScene(const std::string &path, const json11::Json &settings) {
 
 void Engine::onKeyPress(int key)
 {
+    if (key == GLFW_KEY_SPACE) {
+        simulate = !simulate;
+    }
+
+    m_keys.insert(key);
     m_SSFRenderer->onKeyPress(key);
 }
 
 void Engine::onKeyReleased(int key)
 {
+    m_keys.erase(key);
     m_SSFRenderer->onKeyReleased(key);
 }
 
+void Engine::onMouseMove(double deltaX, double deltaY)
+{
+    Eigen::Vector3f look = m_camera.target()-m_camera.position();
+    Eigen::Vector3f perp(look.z(),0,-look.x());
+
+    Eigen::AngleAxis<float> aa(-deltaX/1000.0,Eigen::Vector3f(0,1,0));
+    Eigen::Affine3f rot = Eigen::Affine3f(aa);
+    look = rot * look;
+    perp.normalize();
+    Eigen::AngleAxis<float> aay(deltaY/1000.0,perp);
+    Eigen::Affine3f roty = Eigen::Affine3f(aay);
+    look = roty * look;
+
+    m_camera.setTarget(look + m_camera.position());
+}
+
 void Engine::updateStep() {
-    m_sph->simulate();
+    if(simulate){
+        m_sph->simulate();
+    }
+
+    //handle input
+    Eigen::Vector3f look = m_camera.target()-m_camera.position();
+    look.normalize();
+    Eigen::Vector3f perp(look.z(),0,-look.x());
+    Eigen::Vector3f up(0,1,0);
+    perp *= .01;
+    look *= .01;
+    up *= .01;
+
+    if(m_keys.find(GLFW_KEY_A) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()+perp);
+        m_camera.setTarget(m_camera.target()+perp);
+    }
+    if(m_keys.find(GLFW_KEY_D) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()-perp);
+        m_camera.setTarget(m_camera.target()-perp);
+    }
+    if(m_keys.find(GLFW_KEY_W) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()+look);
+        m_camera.setTarget(m_camera.target()+look);
+    }
+    if(m_keys.find(GLFW_KEY_S) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()-look);
+        m_camera.setTarget(m_camera.target()-look);
+    }
+
+    if(m_keys.find(GLFW_KEY_Q) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()+up);
+        m_camera.setTarget(m_camera.target()+up);
+    }
+
+    if(m_keys.find(GLFW_KEY_E) != m_keys.end()){
+        m_camera.setPosition(m_camera.position()-up);
+        m_camera.setTarget(m_camera.target()-up);
+    }
 
 }
 
@@ -100,7 +160,20 @@ void Engine::render() {
             shader->draw(mvp, Eigen::Vector4f(0.32f, 0.32f, 0.81f, 1.f));
         }
     }else{
-        m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),Eigen::Vector4f(0.8f, 0.54f, 0.54f, 1.f), particleRadius * 2);
+        Eigen::Matrix4f mv = view;
+        Eigen::Matrix4f mvp = proj * view;
+
+
+        m_SSFRenderer->prepareToDrawScene();
+        // Draw world bounding box
+        m_domainShader->draw(mvp, m_sph->getBounds());
+
+        // Draw boundary meshes
+        for (const auto &shader : m_boundaryMeshShader) {
+            shader->draw(mvp, Eigen::Vector4f(0.32f, 0.32f, 0.81f, 1.f));
+        }
+
+        m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),particleRadius * 2);
     }
 }
 

@@ -23,7 +23,7 @@ GLWidget::GLWidget(){
     glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    m_window = glfwCreateWindow(1300,700, "CS224 Final Project", NULL, NULL);
+    m_window = glfwCreateWindow(1000,700, "CS224 Final Project", NULL, NULL);
 
     if (!m_window) {
         throw std::runtime_error("Could not create an OpenGL context!");
@@ -45,8 +45,9 @@ GLWidget::GLWidget(){
 
     m_visible = glfwGetWindowAttrib(m_window, GLFW_VISIBLE) != 0;
     
-    GLWidget::m_engine.initShaders();
     GLWidget::m_engine.setResolution(m_windowSize, m_windowSize);
+    GLWidget::m_engine.initShaders();
+
     GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test.json");
 
 	setupCallbacks();
@@ -59,6 +60,7 @@ GLWidget::~GLWidget() {
 void GLWidget::setupCallbacks() {
 
     glfwSetKeyCallback(m_window, key_callback);
+    glfwSetCursorPosCallback(m_window,mouse_move_callback);
 }
 
 void GLWidget::setVisible(const bool visible) {

@@ -1,10 +1,19 @@
 #version 330
 uniform sampler2D tex;
 uniform sampler2D thickness;
+uniform sampler2D scene_color;
+uniform sampler2D scene_depth;
 in vec2 uv;
 out vec4 fragColor;
 uniform mat4 proj;
 uniform mat4 view;
+
+//settings
+uniform bool doNoise;
+uniform bool doRefracted;
+uniform bool doReflected;
+uniform bool doSpecular;
+uniform bool doRenderNormals;
 
 vec3 uvToEye(vec2 texCoord) {
     float depth = texture(tex,texCoord).x;
@@ -18,8 +27,12 @@ void main() {
     vec2 texelSize = 1.0 / textureSize(tex,0).xy;
     float z = texture(tex,uv).x;
     float thick = texture(thickness,uv).x;
-    if(z==1){
-        discard;
+    float noise = texture(thickness,uv).z;
+    vec4 sceneColor = texture(scene_color,uv);
+    float sceneDepth = texture(scene_depth,uv).x;
+    if(z>=(sceneDepth) || z==1){
+        fragColor = vec4(sceneColor.rgb ,1);
+        return;
     }
     vec3 eyepos = uvToEye(uv);
     vec3 ddx = uvToEye(uv+vec2(texelSize.x,0)) - eyepos;
@@ -35,56 +48,67 @@ void main() {
     }
 
 
-    vec3 norm = cross(ddx,ddy);
-    fragColor = vec4((normalize(norm)+1.)/2.,1);
+    vec3 normal = normalize(cross(ddx,ddy));
 
     vec4 light_pos_view_space = view * vec4(-2,2,-2,1);
 
-    float diffuse_amount = dot(normalize(norm),normalize(light_pos_view_space.xyz-eyepos));
+    vec3 water_color = vec3(.3,.5,.7);
 
-    vec3 normal = normalize(norm);
-    vec3 lightdir = normalize(light_pos_view_space.xyz-eyepos);
+    if(doNoise){
+        vec2 texelSize = 1.0 / textureSize(tex,0).xy;
 
-    vec3 R = 2.0*(dot(normal,lightdir))*normal - lightdir;
-    vec3 V = normalize(-light_pos_view_space.xyz);
+        float z = texture(thickness,uv).z;
+        float zxp = texture(thickness,uv+vec2(texelSize.x,0)).z;
+        float zxn = texture(thickness,uv-vec2(texelSize.x,0)).z;
+        float zyp = texture(thickness,uv+vec2(0,texelSize.y)).z;
+        float zyn = texture(thickness,uv-vec2(0,texelSize.y)).z;
 
-    float specular_amount=pow( max(dot(R,V),0.0) ,20);
-
-    vec3 water_color = vec3(.2,.4,.8);
-
-//    vec4 particleColor = exp(-vec4(0.6f, 0.2f, 0.05f, 3.0f) * thickness*.5);
-//    particleColor.w = clamp(1.0f - particleColor.w, 0.0f, 1.0f);
-
-    vec3 ambient_color = water_color * .2;
-    vec3 diffuse_color = (water_color*diffuse_amount*.6);
-    vec3 specular_color = vec3(specular_amount);
-
-    fragColor = vec4(ambient_color+specular_color,clamp(thick,0,1));
-
-
+        texelSize = vec2(1.f);
+        float dzdx = (zxp-zxn)/(2.0 * texelSize.x);//maybe not times texelSize
+        float dzdy = (zyp-zyn)/(2.0 * texelSize.y);//maybe not times texelSize
+        vec3 perp_amount = vec3(dzdx,dzdy,0);
+        perp_amount = mix(.75*perp_amount,vec3(0),exp(-thick*1));//blend to make single drops look better
+        normal = normalize(normal + perp_amount);
+    }
     //fresnel
     vec3 n = normal;
     vec3 eyeToVertex = normalize(eyepos);
     vec3 E = vec3(0,0,1);
     vec3 vertexToEye = -eyeToVertex;
-    float r0 = .02;
-    float F = r0 + (1.f-r0)*pow((1-dot(vertexToEye,n)),5);
+    float r0 = 0.02;
+    float F = r0 + (1.f-r0)*pow((1-dot(vertexToEye,n)),20);
 
-    vec3 alpha = mix(water_color,vec3(0,0,0),exp(-thick));
-    vec3 refracted = alpha*(1-F);
+    //refracted
+    float B = thick*.01;
+    vec2 refracted_sample = uv + (B*n.xy);
+    vec3 refracted_scene_color = texture(scene_color,refracted_sample).rgb;
+    vec3 alpha = mix(water_color,refracted_scene_color,exp(-thick*.2));
+    vec3 refracted = clamp(alpha*(1-F),0,1);
 
-    vec3 beta = vec3(1,1,1);
-    beta = mix(beta,vec3(0,0,0),exp(-thick));
-    vec3 reflected = beta*F;
+    //reflected
+    vec3 beta = sceneColor.rgb;//should use cubemap
+    //beta = mix(beta,sceneColor.rgb,exp(-thick));//should use cubemap also this is hacked
+    vec3 reflected = clamp(beta*F,0,1);
 
+    //specular
     vec3 l = normalize(light_pos_view_space.xyz - eyepos);
     vec3 H = normalize(l+vertexToEye);
-    specular_color = vec3(1)* pow(clamp(dot(n,H),0,1),30);
+    vec3 specular_color = clamp(vec3(1)* pow(clamp(dot(n,H),0,1),30),0,1);
 
-    fragColor = vec4(refracted + reflected + specular_color ,1);
+    vec3 final_color = vec3(0);
+    if(doRefracted){
+        final_color += refracted;
+    }
+    if(doReflected){
+        final_color += reflected;
+    }
+    if(doSpecular){
+        final_color += specular_color;
+    }
 
+    fragColor = vec4(final_color ,1);
 
-   //fragColor = particleColor;
-    //fragColor = vec4(1,1,0,1);
-    //fragColor = vec4(vec3(thick),1 );
+    if(doRenderNormals){
+        fragColor = vec4((normal + 1.0)/(2.0) ,1);
+    }
 }

@@ -22,6 +22,23 @@ float meanCurvature(){
     float zyp = texture(tex,uv+vec2(0,texelSize.y));
     float zyn = texture(tex,uv-vec2(0,texelSize.y));
 
+    //trying to figure out boundary conditions
+    //if(gl_FragCoord.x>screen_size.x/2){
+        float depth_diff = .005;
+    if(zxp==1 || abs(zxp-z)>depth_diff){
+        return 0;
+    }
+    if(zxn==1 || abs(zxn-z)>depth_diff){
+        return 0;
+    }
+    if(zyp==1 || abs(zyp-z)>depth_diff){
+        return 0;
+    }
+    if(zyn==1 || abs(zyn-z)>depth_diff){
+        return 0;
+    }
+   // }
+
     texelSize = vec2(1.f);
     float dzdx = (zxp-zxn)/(2.0 * texelSize.x);//maybe not times texelSize
 
@@ -40,6 +57,8 @@ float meanCurvature(){
     float dDdy = 2.0*Cy*Cy*dzdx*dzdxy + 2.0*Cx*Cx*dzdy*dzd2y + 2.0*Cx*Cx*Cy*Cy*z*dzdy;
 
     float D = Cy*Cy*dzdx*dzdx+Cx*Cx*dzdy*dzdy+Cx*Cx*Cy*Cy*z*z;
+
+
 
     float Ex = .5 * dzdx * dDdx - (dzd2x*D);
     float Ey = .5 * dzdy * dDdy - (dzd2y*D);

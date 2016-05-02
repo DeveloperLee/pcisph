@@ -16,7 +16,7 @@ public:
     void unBind();
     GLuint getDepthTexture();
     GLuint getColorTexture(int tex_attachment);
-    void renderTextureToFullScreen(int tex_attachment, bool depth, const Eigen::Matrix4f &mat,const Eigen::Matrix4f &v, Shape *quad,float near, float far);
+    void renderTextureToFullScreen(int tex_attachment, bool depth, int render_style, const Eigen::Matrix4f &mat,const Eigen::Matrix4f &v, Shape *quad,float near, float far);
 private:
     GLuint m_FBOID;
     std::vector<GLuint> m_texIDs;

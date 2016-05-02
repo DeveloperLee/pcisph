@@ -58,7 +58,6 @@ void PCIShader::updateBindings(const std::string &name, uint32_t size, int dim,
         if (attribID < 0)
             return;
     }
-    std::cout << attribID << std::endl;
  
     GLuint bufferID = checkVBOCache(name, size, dim, compSize, glType, integral);
 

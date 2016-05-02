@@ -10,6 +10,7 @@
 
 #include <json11.h>
 #include <memory>
+#include <unordered_set>
 
 namespace cs224 {
 
@@ -36,6 +37,7 @@ public:
     void loadScene(const std::string &path, const json11::Json &settings = json11::Json());
     void onKeyPress(int key);
     void onKeyReleased(int key);
+    void onMouseMove(double deltaX,double deltaY);
 
     void updateStep();
 
@@ -53,12 +55,14 @@ private:
     ViewOptions m_viewOptions;
 
     bool renderMode=false;
+    bool simulate = true;
 
     std::unique_ptr<DomainShader> m_domainShader;
     std::unique_ptr<ParticleShader> m_particleShader;
     std::unique_ptr<MeshShader> m_fluidMeshShader;
     std::unique_ptr<SSFRenderer> m_SSFRenderer;
     std::vector<std::unique_ptr<MeshShader>> m_boundaryMeshShader;
+    std::unordered_set<int> m_keys;
 };
 
 } // namespace cs224

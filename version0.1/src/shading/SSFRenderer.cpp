@@ -5,17 +5,19 @@
 
 namespace cs224{
 
-SSFRenderer::SSFRenderer() : m_depthFBO(1,1300,700,true,true),
-                            m_blurHorizFBO(1,1300,700,true,false),
-                            m_blurVertFBO(1,1300,700,true,false),
-                            m_cfFBO1(0,1300,700,false,true),
-                            m_cfFBO2(0,1300,700,false,true),
-                            m_thicknessFBO(1,1300,700,true,false),
-                            m_noiseFBO(1,1300,700,true,false)
+SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),false,true),
+                            m_blurHorizFBO(1,size.x(),size.y(),true,false),
+                            m_blurVertFBO(1,size.x(),size.y(),true,false),
+                            m_cfFBO1(0,size.x(),size.y(),false,true),
+                            m_cfFBO2(0,size.x(),size.y(),false,true),
+                            m_thicknessFBO(1,size.x(),size.y(),true,false),
+                            m_noiseFBO(1,size.x(),size.y(),true,false),
+                            m_sceneFBO(1,size.x(),size.y(),true,true),
+                            m_size(size)
 {
-//    std::string image_location = base_directory+"packages/soil/img_test.png";
-//    GLuint id = SOIL_load_OGL_texture(image_location.c_str(),SOIL_LOAD_AUTO,SOIL_CREATE_NEW_ID,SOIL_FLAG_MIPMAPS);
-//    std::cout << id << std::endl;
+    std::string image_location = base_directory+"images/grass.png";
+    //GLuint id = SOIL_load_OGL_texture(image_location.c_str(),SOIL_LOAD_RGB,SOIL_CREATE_NEW_ID,SOIL_FLAG_MIPMAPS);
+    //std::cout << id << std::endl;
 
 
     // shader programs
@@ -74,101 +76,68 @@ SSFRenderer::SSFRenderer() : m_depthFBO(1,1300,700,true,true),
 
 }
 
+void SSFRenderer::prepareToDrawScene()
+{
+    glClearColor(.8f,.8f,.8f,1.f);
+    m_sceneFBO.Bind();
+    glClearColor(0,0,0,0);
+}
+
 void SSFRenderer::onKeyPress(int key){
-    if(key == GLFW_KEY_Q){
-        near += .1;
-    }else if(key == GLFW_KEY_A){
-        near -= .1;
-    }else if(key == GLFW_KEY_W){
-        far += .1;
-    }else if(key == GLFW_KEY_S){
-        far -= .1;
+//    if(key == GLFW_KEY_Q){
+//        near += .1;
+//    }else if(key == GLFW_KEY_A){
+//        near -= .1;
+//    }else if(key == GLFW_KEY_W){
+//        far += .1;
+//    }else if(key == GLFW_KEY_S){
+//        far -= .1;
+//    }
+
+
+
+    if(key == GLFW_KEY_TAB){
+        renderType = (renderType+1)%6;
     }
-    std::cout << near << " " << far << std::endl;
+
+    if(key == GLFW_KEY_1){
+        render_settings.doNoise = !render_settings.doNoise;
+        std::cout << "doNoise: " << (render_settings.doNoise ? "on" : "off") << std::endl;
+    }
+
+    if(key == GLFW_KEY_2){
+        render_settings.doRefracted = !render_settings.doRefracted;
+        std::cout << "doRefracted: " << (render_settings.doRefracted ? "on" : "off") << std::endl;
+    }
+
+    if(key == GLFW_KEY_3){
+        render_settings.doReflected = !render_settings.doReflected;
+        std::cout << "doReflected: " << (render_settings.doReflected ? "on" : "off") << std::endl;
+    }
+
+    if(key == GLFW_KEY_4){
+        render_settings.doSpecular = !render_settings.doSpecular;
+        std::cout << "doSpecular: " << (render_settings.doSpecular ? "on" : "off") << std::endl;
+    }
+
+    if(key == GLFW_KEY_5){
+        render_settings.doRenderNormals = !render_settings.doRenderNormals;
+        std::cout << "doRenderNormals: " << (render_settings.doRenderNormals ? "on" : "off") << std::endl;
+    }
+
+    if(key == GLFW_KEY_6){
+        render_settings.doCurvatureFlow = !render_settings.doCurvatureFlow;
+        std::cout << "doCurvatureFlow: " << (render_settings.doCurvatureFlow ? "on" : "off") << std::endl;
+    }
 }
 
 void SSFRenderer::onKeyReleased(int key)
 {
 
 }
-void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, const Eigen::Vector4f &color, float particleRadius) {
-    //depthpass
-    m_depthFBO.Bind();
-    shader.bind();
-    shader.updateBindings("position", positions);
-    shader.setUniform("mv", mv);
-    shader.setUniform("proj", proj);
-    shader.setUniform("particleRadius", particleRadius);
-    glUniform4f(glGetUniformLocation(shader.m_program,"color"),color.x(),color.y(),color.z(),1);
-    glEnable(GL_DEPTH_TEST);
-    shader.draw(GL_POINTS, 0, positions.cols(), 1);
-    m_depthFBO.unBind();
 
-    //thickness pass
-    m_thicknessFBO.Bind();
-    m_thicknessShader.bind();
-    m_thicknessShader.updateBindings("position", positions);
-    m_thicknessShader.setUniform("mv", mv);
-    m_thicknessShader.setUniform("proj", proj);
-    m_thicknessShader.setUniform("particleRadius", particleRadius);
-    glUniform4f(glGetUniformLocation(m_thicknessShader.m_program,"color"),color.x(),color.y(),color.z(),1);
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE,GL_ONE);
-    m_thicknessShader.draw(GL_POINTS, 0, positions.cols(), 1);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    m_thicknessFBO.unBind();
-
-    //noise pass
-
-
-
-
-    m_blurHorizFBO.Bind();
-    glUseProgram(m_blurShader);
-    glBindTexture(GL_TEXTURE_2D,m_thicknessFBO.getColorTexture(0));
-    glUniform1i(glGetUniformLocation(m_blurShader,"horiz"),1);
-    m_quad->draw();
-
-    m_blurVertFBO.Bind();
-    glBindTexture(GL_TEXTURE_2D,m_blurHorizFBO.getColorTexture(0));
-    glUniform1i(glGetUniformLocation(m_blurShader,"horiz"),0);
-    m_quad->draw();
-
-    glUseProgram(m_curvatureFlowShader);
-    glUniform2f(glGetUniformLocation(m_curvatureFlowShader,"screen_size"),1300.f,700.f);
-    glUniformMatrix4fv(glGetUniformLocation(m_curvatureFlowShader,"p"),1,GL_FALSE,proj.data());
-
-    m_cfFBO1.Bind();
-    glBindTexture(GL_TEXTURE_2D,m_depthFBO.getDepthTexture());
-    m_quad->draw();
-
-    bool use_first = false;
-
-    for(int i=0;i<40;i++){
-        if(use_first){
-            m_cfFBO1.Bind();
-            glBindTexture(GL_TEXTURE_2D,m_cfFBO2.getDepthTexture());
-            m_quad->draw();
-        }else{
-            m_cfFBO2.Bind();
-            glBindTexture(GL_TEXTURE_2D,m_cfFBO1.getDepthTexture());
-            m_quad->draw();
-        }
-        use_first = !use_first;
-    }
-
-
-
-
-    //m_cfFBO1.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
-
-
-
-
-
-    //m_blurVertFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
+void SSFRenderer::renderFinalToScreen(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj)
+{
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
     //glClearColor(.8,.8,.8,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -177,7 +146,11 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
 
     glUseProgram(m_quadThicknessShader);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,m_cfFBO1.getDepthTexture());
+    if(render_settings.doCurvatureFlow){
+        glBindTexture(GL_TEXTURE_2D,m_cfFBO1.getDepthTexture());
+    }else{
+        glBindTexture(GL_TEXTURE_2D,m_depthFBO.getDepthTexture());
+    }
 
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
@@ -188,10 +161,32 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D,m_sceneFBO.getColorTexture(0));
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D,m_sceneFBO.getDepthTexture());
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
     glActiveTexture(GL_TEXTURE0);
 
     glUniform1i(glGetUniformLocation(m_quadThicknessShader,"tex"),0);
     glUniform1i(glGetUniformLocation(m_quadThicknessShader,"thickness"),1);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"scene_color"),2);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"scene_depth"),3);
+
+
+    //settings
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"doNoise"),render_settings.doNoise);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"doRefracted"),render_settings.doRefracted);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"doReflected"),render_settings.doReflected);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"doSpecular"),render_settings.doSpecular);
+    glUniform1i(glGetUniformLocation(m_quadThicknessShader,"doRenderNormals"),render_settings.doRenderNormals);
 
 
 
@@ -209,9 +204,130 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
 
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    //m_quad->draw();
+    m_quad->draw();
+}
 
-    m_thicknessFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
+void SSFRenderer::doDepthPass(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius)
+{
+    m_depthFBO.Bind();
+    shader.bind();
+    shader.updateBindings("position", positions);
+    shader.setUniform("mv", mv);
+    shader.setUniform("proj", proj);
+    shader.setUniform("particleRadius", particleRadius);
+    glEnable(GL_DEPTH_TEST);
+    shader.draw(GL_POINTS, 0, positions.cols(), 1);
+    m_depthFBO.unBind();
+}
+
+void SSFRenderer::doThicknessPass(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius)
+{
+    m_thicknessFBO.Bind();
+    m_thicknessShader.bind();
+    m_thicknessShader.updateBindings("position", positions);
+    m_thicknessShader.setUniform("mv", mv);
+    m_thicknessShader.setUniform("proj", proj);
+    m_thicknessShader.setUniform("particleRadius", particleRadius);
+    glUniform2f(glGetUniformLocation(m_thicknessShader.m_program,"screensize"),m_size.x(),m_size.y());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,m_depthFBO.getDepthTexture());
+
+    glUniform1i(glGetUniformLocation(m_thicknessShader.m_program,"depthTexture"),0);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE,GL_ONE);
+    m_thicknessShader.draw(GL_POINTS, 0, positions.cols(), 1);
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    m_thicknessFBO.unBind();
+}
+
+void SSFRenderer::doBlurThickness()
+{
+    m_blurHorizFBO.Bind();
+    glUseProgram(m_blurShader);
+    glBindTexture(GL_TEXTURE_2D,m_thicknessFBO.getColorTexture(0));
+    glUniform1i(glGetUniformLocation(m_blurShader,"horiz"),1);
+    m_quad->draw();
+
+    m_blurVertFBO.Bind();
+    glBindTexture(GL_TEXTURE_2D,m_blurHorizFBO.getColorTexture(0));
+    glUniform1i(glGetUniformLocation(m_blurShader,"horiz"),0);
+    m_quad->draw();
+}
+
+void SSFRenderer::doCurvatureFlow(const Eigen::Matrix4f &proj)
+{
+    glUseProgram(m_curvatureFlowShader);
+    glUniform2f(glGetUniformLocation(m_curvatureFlowShader,"screen_size"),m_size.x(),m_size.y());
+    glUniformMatrix4fv(glGetUniformLocation(m_curvatureFlowShader,"p"),1,GL_FALSE,proj.data());
+
+    m_cfFBO1.Bind();
+    glBindTexture(GL_TEXTURE_2D,m_depthFBO.getDepthTexture());
+    m_quad->draw();
+
+    bool use_first = false;
+
+    for(int i=0;i<60;i++){
+        if(use_first){
+            m_cfFBO1.Bind();
+            glBindTexture(GL_TEXTURE_2D,m_cfFBO2.getDepthTexture());
+            m_quad->draw();
+        }else{
+            m_cfFBO2.Bind();
+            glBindTexture(GL_TEXTURE_2D,m_cfFBO1.getDepthTexture());
+            m_quad->draw();
+        }
+        use_first = !use_first;
+    }
+}
+void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius) {
+    //depthpass
+    doDepthPass(mv,proj,positions,particleRadius);
+    doThicknessPass(mv,proj,positions,particleRadius);
+    doBlurThickness();
+    doCurvatureFlow(proj);
+//m_depthFBO,m_blurVertFBO,m_blurHorizFBO,m_cfFBO1,m_cfFBO2,m_thicknessFBO,m_noiseFBO,m_sceneFBO
+    //m_cfFBO1.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
+    if(renderType==0){
+        renderFinalToScreen(mv,proj);
+    }else if(renderType==1){
+        m_depthFBO.renderTextureToFullScreen(0,true,1,proj,mv,m_quad.get(),near,far);
+
+
+
+    }else if(renderType==2){
+        m_thicknessFBO.renderTextureToFullScreen(0,false,2,proj,mv,m_quad.get(),near,far);
+
+
+    }else if(renderType==3){
+        m_thicknessFBO.renderTextureToFullScreen(0,false,3,proj,mv,m_quad.get(),near,far);
+
+    }else if(renderType==4){
+        m_blurVertFBO.renderTextureToFullScreen(0,false,2,proj,mv,m_quad.get(),near,far);
+
+    }else if(renderType==5){
+        m_cfFBO1.renderTextureToFullScreen(0,true,1,proj,mv,m_quad.get(),near,far);
+    }else if(renderType==6){
+       // m_depthFBO.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
+    }else if(renderType==7){
+       // m_depthFBO.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
+    }else if(renderType==8){
+       // m_depthFBO.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
+    }else if(renderType==9){
+       // m_depthFBO.renderTextureToFullScreen(0,true,proj,mv,m_quad.get(),near,far);
+    }
+
+
+
+
+
+    //m_blurVertFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
+
+
+    //m_thicknessFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
+    //m_sceneFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
 
 }
 

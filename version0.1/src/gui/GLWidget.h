@@ -47,10 +47,20 @@ private:
 
 static void key_callback(GLFWwindow *window, int key, int scancode, int action , int mods) {
 
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-        running = !running;
-    } else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+    if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test.json");
+    }
+
+    if (key == GLFW_KEY_X && action == GLFW_PRESS) {
+        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test2.json");
+    }
+
+    if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test3.json");
     }
 
     if(action == GLFW_PRESS){
@@ -58,6 +68,20 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action ,
     }else if(action == GLFW_RELEASE){
         cs224::GLWidget::m_engine.onKeyReleased(key);
     }
+}
+
+static void mouse_move_callback(GLFWwindow *window, double x, double y) {
+    int width;
+    int height;
+    glfwGetWindowSize(window,&width,&height);
+    double deltaX = x - (width/2.0);
+    double deltaY = y - (height/2.0);
+    if(deltaX > 100 || deltaY > 100){
+        glfwSetCursorPos(window,width/2.0,height/2.0);
+        return;
+    }
+    cs224::GLWidget::m_engine.onMouseMove(deltaX,deltaY);
+    glfwSetCursorPos(window,width/2.0,height/2.0);
 }
 
 }

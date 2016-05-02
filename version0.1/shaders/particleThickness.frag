@@ -1,7 +1,8 @@
 #version 430
-uniform vec4 color;
+uniform sampler2D depthTexture;
 in vec2 gPosition;
 uniform float particleRadius;
+uniform vec2 screensize;
 layout (location = 0) out vec4 thickness;
 flat in int vert_num;
 
@@ -16,7 +17,14 @@ void main() {
     vec3 L = normalize(vec3(1.0));
     float d = max(0.0, dot(L, n));
     n = normalize(n);
-    thickness=vec4(vec3(n.z)*.1,snoise(vec3(1,1,vert_num)));
+    float noise = (snoise(vec3(gPosition,float(vert_num)/10.)));
+    float current_depth=gl_FragCoord.z - n.z*particleRadius;
+    float sampled_depth=texture2D(depthTexture,gl_FragCoord.xy/screensize).x;
+    float x = gPosition.x*n.z;
+    float y = gPosition.y*n.z;
+    float e = exp(-(x*x)-(y*y)-((current_depth-sampled_depth)*(current_depth-sampled_depth)));
+    float I = noise * e;
+    thickness=vec4(vec2(n.z),noise,noise);
 }
 
 
