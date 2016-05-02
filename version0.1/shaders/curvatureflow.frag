@@ -12,19 +12,19 @@ float meanCurvature(){
     float Vy = screen_size.y;
     float Cx = 2.0/(Vx*Fx);
     float Cy = 2.0/(Vx*Fx);
-    float z = texture(tex,uv);
-    float zxp = texture(tex,uv+vec2(texelSize.x,0));
-    float zxn = texture(tex,uv-vec2(texelSize.x,0));
-    float zpxpy = texture(tex,uv+texelSize);
-    float znxpy = texture(tex,uv+(texelSize*vec2(-1,1)));
-    float zpxny = texture(tex,uv+(texelSize*vec2(1,-1)));
-    float znxny = texture(tex,uv+(texelSize*vec2(-1,-1)));
-    float zyp = texture(tex,uv+vec2(0,texelSize.y));
-    float zyn = texture(tex,uv-vec2(0,texelSize.y));
+    float z = texture(tex,uv).x;
+    float zxp = texture(tex,uv+vec2(texelSize.x,0)).x;
+    float zxn = texture(tex,uv-vec2(texelSize.x,0)).x;
+    float zpxpy = texture(tex,uv+texelSize).x;
+    float znxpy = texture(tex,uv+(texelSize*vec2(-1,1))).x;
+    float zpxny = texture(tex,uv+(texelSize*vec2(1,-1))).x;
+    float znxny = texture(tex,uv+(texelSize*vec2(-1,-1))).x;
+    float zyp = texture(tex,uv+vec2(0,texelSize.y)).x;
+    float zyn = texture(tex,uv-vec2(0,texelSize.y)).x;
 
     //trying to figure out boundary conditions
     //if(gl_FragCoord.x>screen_size.x/2){
-        float depth_diff = .005;
+        float depth_diff = .00005;//need to play around with this
     if(zxp==1 || abs(zxp-z)>depth_diff){
         return 0;
     }

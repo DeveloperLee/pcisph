@@ -18,7 +18,7 @@ uniform bool doRenderNormals;
 vec3 uvToEye(vec2 texCoord) {
     float depth = texture(tex,texCoord).x;
     vec2 transUV = (texCoord - vec2(.5))*2;
-    vec4 sscoord = vec4(transUV,depth,1);
+    vec4 sscoord = vec4(transUV,depth*2.0 - 1.0,1);
     mat4 invproj = inverse(proj);
     vec4 eyepos = invproj * sscoord;
     return eyepos.xyz/eyepos.w;

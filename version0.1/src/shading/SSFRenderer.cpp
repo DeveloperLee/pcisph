@@ -79,6 +79,7 @@ SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),
 void SSFRenderer::prepareToDrawScene()
 {
     glClearColor(.8f,.8f,.8f,1.f);
+    glClearDepth(1.f);
     m_sceneFBO.Bind();
     glClearColor(0,0,0,0);
 }

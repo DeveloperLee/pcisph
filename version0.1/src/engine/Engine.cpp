@@ -65,6 +65,9 @@ void Engine::onKeyPress(int key)
     if (key == GLFW_KEY_SPACE) {
         simulate = !simulate;
     }
+    if (key == GLFW_KEY_0) {
+        renderMode = !renderMode;
+    }
 
     m_keys.insert(key);
     m_SSFRenderer->onKeyPress(key);

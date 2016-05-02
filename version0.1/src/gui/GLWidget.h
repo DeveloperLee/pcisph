@@ -52,15 +52,15 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action ,
     }
 
     if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
-        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test.json");
+        GLWidget::m_engine.loadScene(base_directory + "scenes/test.json");
     }
 
     if (key == GLFW_KEY_X && action == GLFW_PRESS) {
-        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test2.json");
+        GLWidget::m_engine.loadScene(base_directory + "scenes/test2.json");
     }
 
     if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-        GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test3.json");
+        GLWidget::m_engine.loadScene(base_directory + "scenes/test3.json");
     }
 
     if(action == GLFW_PRESS){

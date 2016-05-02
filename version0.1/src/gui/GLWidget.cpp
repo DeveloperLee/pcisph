@@ -48,7 +48,7 @@ GLWidget::GLWidget(){
     GLWidget::m_engine.setResolution(m_windowSize, m_windowSize);
     GLWidget::m_engine.initShaders();
 
-    GLWidget::m_engine.loadScene("/gpfs/main/home/sj4/course/cs224final/pcisph/version0.1/scenes/test.json");
+    GLWidget::m_engine.loadScene(base_directory + "scenes/test.json");
 
 	setupCallbacks();
 }

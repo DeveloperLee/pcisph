@@ -22,7 +22,7 @@
                 "type" : "fluid"
         }],
         "meshes" : [{
-                "filename" : "/home/sj4/course/cs224final/pcisph/version0.1/scenes/obj/bowl.obj",
+                "filename" : "/home/sam/pcisph/version0.1/scenes/obj/bowl.obj",
                 "type" : "boundary"
         }]
     }
