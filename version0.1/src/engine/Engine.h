@@ -56,6 +56,7 @@ private:
 
     bool renderMode=false;
     bool simulate = true;
+    float time_tracker = 0.f;
 
     std::unique_ptr<DomainShader> m_domainShader;
     std::unique_ptr<ParticleShader> m_particleShader;

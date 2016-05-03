@@ -141,4 +141,32 @@ namespace cs224 {
 
     }
 
+    void FBO::renderSpecificTextureToFullScreen(GLuint texID,Shape *quad)
+    {
+        glUseProgram(m_quadShader);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+        glActiveTexture(GL_TEXTURE0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        //bind quad shader
+        //set uniforms
+        glUniform1i(glGetUniformLocation(m_quadShader,"render_style"),0);
+        glUniform1i(glGetUniformLocation(m_quadShader,"tex"),0);
+        //glUniform1f(glGetUniformLocation(m_quadShader,"near"),near);
+        //glUniform1f(glGetUniformLocation(m_quadShader,"far"),far);
+       // glUniformMatrix4fv(glGetUniformLocation(m_quadShader,"proj"),1,GL_FALSE,mat.data());
+        //glUniformMatrix4fv(glGetUniformLocation(m_quadShader,"view"),1,GL_FALSE,v.data());
+
+        glBindTexture(GL_TEXTURE_2D, texID);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+        quad->draw();
+    }
+
+    void FBO::replaceColorAttachmentTexture(GLuint new_tex_id, int color_attachment)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER,m_FBOID);
+        glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0 + color_attachment,GL_TEXTURE_2D,new_tex_id,0);
+    }
+
 }

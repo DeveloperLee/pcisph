@@ -58,6 +58,7 @@ void Engine::loadScene(const std::string &path, const json11::Json &settings) {
     for (const auto &mesh : m_sph->getBoundaryMeshes()) {
         m_boundaryMeshShader.emplace_back(new MeshShader(mesh));
     }
+    m_SSFRenderer->resetPreRender();
 }
 
 void Engine::onKeyPress(int key)
@@ -96,8 +97,10 @@ void Engine::onMouseMove(double deltaX, double deltaY)
 }
 
 void Engine::updateStep() {
-    if(simulate){
+    if(simulate && !m_SSFRenderer->renderingStills()){
         m_sph->simulate();
+    }else if(m_SSFRenderer->preRendering() && m_SSFRenderer->renderingStills()){
+        usleep(16666);
     }
 
     //handle input
@@ -141,6 +144,15 @@ void Engine::updateStep() {
 void Engine::render() {
 
     if (!m_sph) return;
+    if(m_SSFRenderer->preRendering() && !m_SSFRenderer->renderingStills()){
+        time_tracker += m_sph->getTimeStep();
+        if(time_tracker>.0166666){
+           time_tracker = time_tracker - .0166666;
+        }else{
+           m_SSFRenderer->drawPreRenderedAsYouGo();
+           return;
+        }
+    }
 
     Eigen::Matrix4f view = m_camera.viewMatrix();
     Eigen::Matrix4f proj = m_camera.projectionMatrix();
@@ -177,6 +189,9 @@ void Engine::render() {
         }
 
         m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),particleRadius * 2);
+        if(m_SSFRenderer->preRendering() && !m_SSFRenderer->renderingStills()){
+            m_SSFRenderer->drawPreRenderedAsYouGo();
+        }
     }
 }
 

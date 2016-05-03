@@ -67,7 +67,7 @@ void main() {
         float dzdx = (zxp-zxn)/(2.0 * texelSize.x);//maybe not times texelSize
         float dzdy = (zyp-zyn)/(2.0 * texelSize.y);//maybe not times texelSize
         vec3 perp_amount = vec3(dzdx,dzdy,0);
-        perp_amount = mix(.75*perp_amount,vec3(0),exp(-thick*1));//blend to make single drops look better
+        perp_amount = mix((1-normal.z)*perp_amount,vec3(0),exp(-thick*1));//blend to make single drops look better
         normal = normalize(normal + perp_amount);
     }
     //fresnel

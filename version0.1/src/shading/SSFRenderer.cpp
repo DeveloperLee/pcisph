@@ -13,9 +13,10 @@ SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),
                             m_thicknessFBO(1,size.x(),size.y(),true,false),
                             m_noiseFBO(1,size.x(),size.y(),true,false),
                             m_sceneFBO(1,size.x(),size.y(),true,true),
+                            m_preRenderFBO(1,size.x(),size.y(),true,false),
                             m_size(size)
 {
-    std::string image_location = base_directory+"images/grass.png";
+    //std::string image_location = base_directory+"images/grass.png";
     //GLuint id = SOIL_load_OGL_texture(image_location.c_str(),SOIL_LOAD_RGB,SOIL_CREATE_NEW_ID,SOIL_FLAG_MIPMAPS);
     //std::cout << id << std::endl;
 
@@ -73,6 +74,16 @@ SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),
     m_quad->setAttribute(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat) * 5, (sizeof(GLfloat) * 3));
 
 
+    glGenTextures(num_frames,preRender);
+    for(int i=0;i<num_frames;i++){
+        glBindTexture(GL_TEXTURE_2D,	preRender[i]);
+        glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MAG_FILTER,	GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MIN_FILTER,	GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D,	0,	GL_R3_G3_B2,	size.x(),	size.y(),
+                     0,	GL_RGB,	 GL_UNSIGNED_BYTE_3_3_2,	0);
+    }
+
+
 
 }
 
@@ -95,7 +106,10 @@ void SSFRenderer::onKeyPress(int key){
 //        far -= .1;
 //    }
 
-
+    if(key == GLFW_KEY_ENTER && !enter_pressed){
+        capped = frame_number;
+        enter_pressed = true;
+    }
 
     if(key == GLFW_KEY_TAB){
         renderType = (renderType+1)%6;
@@ -130,6 +144,10 @@ void SSFRenderer::onKeyPress(int key){
         render_settings.doCurvatureFlow = !render_settings.doCurvatureFlow;
         std::cout << "doCurvatureFlow: " << (render_settings.doCurvatureFlow ? "on" : "off") << std::endl;
     }
+
+    if(key == GLFW_KEY_P){
+        render_settings.preRender = !render_settings.preRender;
+    }
 }
 
 void SSFRenderer::onKeyReleased(int key)
@@ -137,9 +155,30 @@ void SSFRenderer::onKeyReleased(int key)
 
 }
 
+void SSFRenderer::resetPreRender()
+{
+    frame_number = 0;
+    capped = num_frames;
+    enter_pressed = false;
+}
+
+bool SSFRenderer::renderingStills()
+{
+    return frame_number >= capped && render_settings.preRender;
+}
+
 void SSFRenderer::renderFinalToScreen(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj)
 {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    if(render_settings.preRender){
+        m_preRenderFBO.replaceColorAttachmentTexture(preRender[frame_number],0);
+        m_preRenderFBO.Bind();
+        frame_number++;
+        if(frame_number%10==0){
+            std::cout << "frame number " << frame_number << " out of " << num_frames << std::endl;
+        }
+    }else{
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    }
     //glClearColor(.8,.8,.8,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0,0,0,0);
@@ -206,6 +245,12 @@ void SSFRenderer::renderFinalToScreen(const Eigen::Matrix4f &mv, const Eigen::Ma
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
     m_quad->draw();
+
+    if(render_settings.preRender){
+        m_preRenderFBO.replaceColorAttachmentTexture(0,0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    }
+
 }
 
 void SSFRenderer::doDepthPass(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius)
@@ -285,6 +330,10 @@ void SSFRenderer::doCurvatureFlow(const Eigen::Matrix4f &proj)
 }
 void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius) {
     //depthpass
+    if(frame_number >= capped && render_settings.preRender){
+        drawPreRendered();
+        return;
+    }
     doDepthPass(mv,proj,positions,particleRadius);
     doThicknessPass(mv,proj,positions,particleRadius);
     doBlurThickness();
@@ -330,6 +379,21 @@ void SSFRenderer::draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, c
     //m_thicknessFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
     //m_sceneFBO.renderTextureToFullScreen(0,false,proj,mv,m_quad.get(),near,far);
 
+}
+
+void SSFRenderer::drawPreRendered()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    GLuint texid = preRender[frame_number%capped];
+    m_preRenderFBO.renderSpecificTextureToFullScreen(texid,m_quad.get());
+    frame_number++;
+}
+
+void SSFRenderer::drawPreRenderedAsYouGo()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    GLuint texid = preRender[(frame_number-1)%capped];
+    m_preRenderFBO.renderSpecificTextureToFullScreen(texid,m_quad.get());
 }
 
 }

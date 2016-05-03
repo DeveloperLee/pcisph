@@ -17,6 +17,8 @@ public:
     GLuint getDepthTexture();
     GLuint getColorTexture(int tex_attachment);
     void renderTextureToFullScreen(int tex_attachment, bool depth, int render_style, const Eigen::Matrix4f &mat,const Eigen::Matrix4f &v, Shape *quad,float near, float far);
+    void replaceColorAttachmentTexture(GLuint new_tex_id,int color_attachment);
+    void renderSpecificTextureToFullScreen(GLuint texID, Shape *quad);
 private:
     GLuint m_FBOID;
     std::vector<GLuint> m_texIDs;
