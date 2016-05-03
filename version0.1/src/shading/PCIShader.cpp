@@ -27,6 +27,38 @@ bool PCIShader::buildShader(const std::string &name,
     
     if(!checkShaderProgram(geometry_str)) return false;
 
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+
+    glGetShaderiv(m_vertexShader, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(m_vertexShader, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (!Result && InfoLogLength > 0) {
+        std::vector<char> VertexShaderErrorMessage(InfoLogLength);
+        glGetShaderInfoLog(m_vertexShader, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+        fprintf(stderr, "Error compiling shader: %s\n%s\n",
+                "vertex", &VertexShaderErrorMessage[0]);
+    }
+
+    glGetShaderiv(m_geometryShader, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(m_geometryShader, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (!Result && InfoLogLength > 0) {
+        std::vector<char> VertexShaderErrorMessage(InfoLogLength);
+        glGetShaderInfoLog(m_geometryShader, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+        fprintf(stderr, "Error compiling shader: %s\n%s\n",
+                "geo", &VertexShaderErrorMessage[0]);
+    }
+
+    glGetShaderiv(m_fragmentShader, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(m_fragmentShader, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (!Result && InfoLogLength > 0) {
+        std::vector<char> VertexShaderErrorMessage(InfoLogLength);
+        glGetShaderInfoLog(m_fragmentShader, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+        fprintf(stderr, "Error compiling shader: %s\n%s\n",
+                "frag", &VertexShaderErrorMessage[0]);
+    }
+
+
+
     m_program = glCreateProgram();
 
     glAttachShader(m_program, m_vertexShader);
@@ -84,7 +116,7 @@ GLint PCIShader::getUnifLocation(const std::string &name) const {
     GLint id = glGetUniformLocation(m_program, name.c_str());
 
     if (id == -1) {
-        std::cerr << m_shaderName << ": warning: did not find uniform " << name << std::endl;
+        //std::cerr << m_shaderName << ": warning: did not find uniform " << name << std::endl;
     }
     return id;
 }
