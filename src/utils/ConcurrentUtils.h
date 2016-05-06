@@ -1,7 +1,11 @@
 #pragma once
 #include <tbb/parallel_for.h>
+#include <tbb/enumerable_thread_specific.h>
 
 namespace cs224 {
+
+typedef tbb::enumerable_thread_specific<float> Thread_float;    
+
 namespace ConcurrentUtils{
     
     // Template function that concurrently runs a loop operation

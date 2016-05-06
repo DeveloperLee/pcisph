@@ -1,28 +1,53 @@
-// This class is responsible for retrieving data from a parsed xml file.
-
 #pragma once
 
-#include  "STD.h"
-#include  <sting>
+#include "Def.h"
+#include <json11.h>
+#include <string>
 
 namespace cs224 {
-
+    
 typedef std::string XMLString;
 
 class Settings {
+public:
+    Settings() = default;
+    Settings(const json11::Json &json);
 
-public: 
+    const json11::Json &json() const { return _json; }
 
-	Settings();
-	//Settings(XML...);
-    float getFloat(const XMLString &key, float default) const;
-    int   getInt(const XMLString &key, int default) const;
-    bool  getBool(const XMLString &key, bool default) const;
-    Vector2f getVector2f(const XMLString &key, Vector2f default) const;
-    Vector3f getVector3f(const XMLString &key, Vector3f default) const;
-    Box2f getBox2f(const XMLString &key, Box2f default) const;
-    Box3f getBox3f(const XMLString &key, Box3f default) const;
-    XMLString getString(const XMLString &key, XMLString default) const;
+    bool hasObject(const XMLString &name) const;
+    Settings getObject(const XMLString &name) const;
 
+    bool hasString(const XMLString &name) const;
+    XMLString getString(const XMLString &name) const;
+    XMLString getString(const XMLString &name, const XMLString &def) const;
+
+    bool hasBool(const XMLString &name) const;
+    bool getBool(const XMLString &name) const;
+    bool getBool(const XMLString &name, bool def) const;
+
+    bool hasFloat(const XMLString &name) const;
+    float getFloat(const XMLString &name) const;
+    float getFloat(const XMLString &name, float def) const;
+
+    bool hasInteger(const XMLString &name) const;
+    int getInteger(const XMLString &name) const;
+    int getInteger(const XMLString &name, int def) const;
+
+    bool hasVector2(const XMLString &name) const;
+    Vector2f getVector2(const XMLString &name) const;
+    Vector2f getVector2(const XMLString &name, const Vector2f &def) const;
+
+    bool hasVector3(const XMLString &name) const;
+    Vector3f getVector3(const XMLString &name) const;
+    Vector3f getVector3(const XMLString &name, const Vector3f &def) const;
+
+    bool hasBox3(const XMLString &name) const;
+    Box3f getBox3(const XMLString &name) const;
+    Box3f getBox3(const XMLString &name, const Box3f &def) const;
+
+private:
+    json11::Json _json;
 };
-}
+
+} 

@@ -1,0 +1,29 @@
+{
+    "settings" : {
+        "method" : "pcisph",
+        "particleRadius" : 0.01,
+        "restDensity" : 1000.0,
+        "surfaceTension" : 1.0,
+        "viscosity" : 2.0,
+        "timeStep" : 0.001,
+
+        "gravity" : [0,-9.81,0]
+    },
+    "scene" : {
+        "camera" : {
+            "position" : [1.5,1,4.5],
+            "target" : [0.0,0,0]
+        },
+        "world" : {
+            "bounds" : [[-1.0,0,-1.0],[1.0,1.5,1.0]]
+        },
+        "boxes" : [{
+                "bounds" : [[-0.2,0.55,-0.2],[0.2,0.85,0.2]],
+                "type" : "fluid"
+        }],
+        "meshes" : [{
+                "filename" : "/home/sj4/course/pcisph/scenes/obj/bowl.obj",
+                "type" : "boundary"
+        }]
+    }
+}

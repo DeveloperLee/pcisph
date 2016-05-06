@@ -11,11 +11,7 @@
 
 #pragma once
 
-#include "utils/STD.h"
-#include "utils/Vector.h"
-#include "utils/Math.h"
-
-#define PI 3.141593
+#include "utils/Def.h"
 
 namespace cs224 {
 
