@@ -31,7 +31,7 @@ void main(){
     if(texture(tex,uv).x==max_depth){
         //discard;
     }
-    fragColor = vec4(total.xy,texture(tex,uv).za);
+    fragColor = vec4(total.xy,texture(tex,uv).z, texture(tex,uv).a);
 
 
 

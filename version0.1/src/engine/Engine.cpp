@@ -179,7 +179,7 @@ void Engine::render() {
         Eigen::Matrix4f mvp = proj * view;
 
 
-        m_SSFRenderer->prepareToDrawScene();
+        //m_SSFRenderer->prepareToDrawScene();
         // Draw world bounding box
         m_domainShader->draw(mvp, m_sph->getBounds());
 
@@ -188,10 +188,10 @@ void Engine::render() {
             shader->draw(mvp, Eigen::Vector4f(0.32f, 0.32f, 0.81f, 1.f));
         }
 
-        m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),particleRadius * 2);
-        if(m_SSFRenderer->preRendering() && !m_SSFRenderer->renderingStills()){
-            m_SSFRenderer->drawPreRenderedAsYouGo();
-        }
+//        m_SSFRenderer->draw(view, proj, cs224::toMatrix(m_sph->getFluidPositions()),particleRadius * 2);
+//        if(m_SSFRenderer->preRendering() && !m_SSFRenderer->renderingStills()){
+//            m_SSFRenderer->drawPreRenderedAsYouGo();
+//        }
     }
 }
 

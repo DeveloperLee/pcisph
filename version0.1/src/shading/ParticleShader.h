@@ -16,7 +16,7 @@ struct ParticleShader {
     {
 
         // shader programs
-        const std::string vert_str = "#version 430\n"
+        const std::string vert_str = "#version 400\n"
                                  "uniform mat4 mv;\n"
                                  "in vec3 position;\n"
                                  "out vec4 vPosition;\n"
@@ -24,7 +24,7 @@ struct ParticleShader {
                                  "    vPosition = mv * vec4(position, 1.0);\n"
                                  "}";
 
-        const std::string frag_str = "#version 430\n"
+        const std::string frag_str = "#version 400\n"
                                    "uniform vec4 color;\n"
                                    "in vec2 gPosition;\n"
                                    "layout (location = 0) out vec4 out_color;\n"
@@ -39,7 +39,7 @@ struct ParticleShader {
                                    "    //out_color = vec4(d*vec3(1,1,1), color.w);\n"
                                    "}";
 
-        const std::string geo_str = "#version 430\n"
+        const std::string geo_str = "#version 400\n"
                                    "layout (points) in;\n"
                                    "layout (triangle_strip) out;\n"
                                    "layout (max_vertices = 4) out;\n"

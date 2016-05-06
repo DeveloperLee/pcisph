@@ -1,4 +1,4 @@
-#version 430
+#version 400
 uniform sampler2D depthTexture;
 in vec2 gPosition;
 uniform float particleRadius;
@@ -19,7 +19,7 @@ void main() {
     n = normalize(n);
     float noise = (snoise(vec3(gPosition,float(vert_num)/10.)));
     float current_depth=gl_FragCoord.z - n.z*particleRadius;
-    float sampled_depth=texture2D(depthTexture,gl_FragCoord.xy/screensize).x;
+    float sampled_depth=texture(depthTexture,gl_FragCoord.xy/screensize).x;
     float x = gPosition.x*n.z;
     float y = gPosition.y*n.z;
     float e = exp(-(x*x)-(y*y)-((current_depth-sampled_depth)*(current_depth-sampled_depth)));

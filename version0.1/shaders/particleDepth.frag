@@ -1,4 +1,4 @@
-#version 430
+#version 400
 in vec2 gPosition;
 uniform mat4 proj;
 uniform float particleRadius;

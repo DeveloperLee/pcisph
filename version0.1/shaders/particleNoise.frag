@@ -1,4 +1,4 @@
-#version 430
+#version 400
 uniform vec4 color;
 uniform sampler2D depthTexture;
 in vec2 gPosition;

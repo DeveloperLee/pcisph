@@ -4,7 +4,7 @@
         "particleRadius" : 0.01,
         "restDensity" : 1000.0,
         "surfaceTension" : 1.0,
-        "viscosity" : 2.0,
+        "viscosity" : 100.0,
         "timeStep" : 0.001,
 
         "gravity" : [0,-9.81,0]
@@ -15,14 +15,14 @@
             "target" : [0.0,0,0]
         },
         "world" : {
-            "bounds" : [[-1.0,0,-1.0],[1.0,1.5,1.0]]
+            "bounds" : [[-1.0,0,-1.0],[1.0,2.0,1.0]]
         },
         "boxes" : [{
-                "bounds" : [[-0.2,0.55,-0.2],[0.2,0.85,0.2]],
+                "bounds" : [[-0.2,1.55,-0.2],[0.2,1.85,0.2]],
                 "type" : "fluid"
         }],
         "meshes" : [{
-                "filename" : "/home/sj4/course/cs224final/pcisph/version0.1/scenes/obj/bowl.obj",
+                "filename" : "/Users/EricLee/Desktop/pcisph/version0.1/scenes/obj/bowl.obj",
                 "type" : "boundary"
         }]
     }

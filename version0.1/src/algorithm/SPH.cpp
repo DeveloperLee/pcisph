@@ -45,7 +45,8 @@ void SPH::loadParams(const Settings &settings) {
                         settings.getFloat("surfaceTension", 1.f),
                         settings.getFloat("viscosity", 0.f),
                         settings.getFloat("compressionThreshold", 0.02f),
-                        settings.getVector3("gravity", Vector3f(0.f, -9.8f, 0.f))
+                        settings.getVector3("gravity", Vector3f(0.f, -9.8f, 0.f)),
+                        settings.getVector3("initv", Vector3f(0.f, 0.f, 0.f))
                         );
     
     averageDensityVarianceTh = simConstParams.maxCompression * simConstParams.restDensity;
@@ -69,16 +70,6 @@ void SPH::allocMemory(int fluidSize, int boundarySize) {
     boundaryMass.resize(boundarySize);
     boundaryAlive.resize(boundarySize);
 }
-
-void SPH::update(float dt) {
-
-    float targetTime = currentTime + dt;
-
-    while (currentTime < targetTime) {
-        simulate();
-    }
-}
-
 
 // @Func : Test the whether a boundary particle is alive.
 //         A boundary particle is considered alive iff
@@ -179,27 +170,33 @@ void SPH::initNormals() {
     });
 }
 
-void SPH::handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler) {
+// @Func : The collision is based on the spatial relationship between a fluid particle and the bounding box
+//         If the algorithm detects that the particle exceeds the bounding box, it will adjust
+//         the particle's position and velocity based on how far it exceeds the bounding box. 
+void SPH::handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> collisionFunc) {
+    
 
+    // Make sure not to use the same variable here because the multi-thread will cause 
+    // the program to crash if we use the pre-declare variable here.
     for (size_t i = 0; i < currentFluidPosition.size(); ++i) {
         const auto &p = currentFluidPosition[i];
         if (p.x() < boundaryBox.min.x()) {
-            handler(i, Vector3f(1.f, 0.f, 0.f), boundaryBox.min.x() - p.x());
+            collisionFunc(i, Vector3f(1.f, 0.f, 0.f), boundaryBox.min.x() - p.x());
         }
         if (p.x() > boundaryBox.max.x()) {
-            handler(i, Vector3f(-1.f, 0.f, 0.f), p.x() - boundaryBox.max.x());
+            collisionFunc(i, Vector3f(-1.f, 0.f, 0.f), p.x() - boundaryBox.max.x());
         }
         if (p.y() < boundaryBox.min.y()) {
-            handler(i, Vector3f(0.f, 1.f, 0.f), boundaryBox.min.y() - p.y());
+            collisionFunc(i, Vector3f(0.f, 1.f, 0.f), boundaryBox.min.y() - p.y());
         }
         if (p.y() > boundaryBox.max.y()) {
-            handler(i, Vector3f(0.f, -1.f, 0.f), p.y() - boundaryBox.max.y());
+            collisionFunc(i, Vector3f(0.f, -1.f, 0.f), p.y() - boundaryBox.max.y());
         }
         if (p.z() < boundaryBox.min.z()) {
-            handler(i, Vector3f(0.f, 0.f, 1.f), boundaryBox.min.z() - p.z());
+            collisionFunc(i, Vector3f(0.f, 0.f, 1.f), boundaryBox.min.z() - p.z());
         }
         if (p.z() > boundaryBox.max.z()) {
-            handler(i, Vector3f(0.f, 0.f, -1.f), p.z() - boundaryBox.max.z());
+            collisionFunc(i, Vector3f(0.f, 0.f, -1.f), p.z() - boundaryBox.max.z());
         }
     }
 }
@@ -209,12 +206,13 @@ void SPH::handleCollisions(std::function<void(size_t i, const Vector3f &n, float
 void SPH::adjustParticles() {
 
     handleCollisions([&] (size_t i, const Vector3f &n, float d) {
-        float c = 0.5f;
         currentFluidPosition[i] += n * d;
-        currentFluidVelocity[i] -= (1 + c) * currentFluidVelocity[i].dot(n) * n;
+        currentFluidVelocity[i] -= 1.5 * currentFluidVelocity[i].dot(n) * n;
     });
 }
 
+
+// @Func : Update the particle information
 void SPH::buildFluidGrids() {
 
     fluidGrid.update(currentFluidPosition, [&] (size_t i, size_t j) {
@@ -316,9 +314,14 @@ void SPH::predictVelocityAndPosition() {
     });
 }
 
+
+// @Func : This function updates the fluid pressure. The fluid particle's pressure is generally based
+//         on its surronding particles: both fluid particles and boundary particles. The reason why 
+//         we take the boundary particles into account is that it enables us to deal with the fluid
+//         particles with insufficient neighbouring fluid particles.
 void SPH::updatePressures() {
     
-    Thread_float maxDensityVariation(-INFINITY);
+    Thread_float maxDensityVariation(-INFINITY); //Later will be used in adjust timestep and shock detection.
     Thread_float accDensityVariation(0.f);
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
@@ -330,7 +333,7 @@ void SPH::updatePressures() {
 
         float boundaryDensity = 0.f;
         boundaryGrid.query(kernelParams.radius,boundaryPositions, newFluidPosition[i], [&] (size_t j, const Vector3f &r, float r2) {
-            boundaryDensity += W.poly6(r2) * boundaryMass[j];;
+            boundaryDensity += W.poly6(r2) * boundaryMass[j];
         });
         density += W.poly6C * boundaryDensity;
 
@@ -348,7 +351,8 @@ void SPH::updatePressures() {
 
 
 // @Func : Update the pressure force based on the equation
-//         provided in paper.
+//         provided in paper. Again, the pressure force is given by both surronding fluid particles
+//         and boundary particles.
 void SPH::updatePressureForces() {
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
@@ -394,10 +398,13 @@ void SPH::updatePressureForces() {
 //         swap the current and predicted buffer.
 void SPH::setVelocityAndPosition() {
     
-    Thread_float maxVelocity(0.f);
+    Thread_float maxVelocity(0.f);   //Later will be used in adjust timestep and shock detection.
     Thread_float maxForce(0.f);
+    
 
-     ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
+    // Again, F = ma == >  a = F/m == > V(new) = V(old) + t * F / m
+    //                     X(new) = X(old) + v * t 
+    ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
         Vector3f force = fluidForces[i] + fluidPressureForces[i];
         maxForce.local() = std::max(maxForce.local(), force.squaredNorm());
         newFluidVelocity[i] = currentFluidVelocity[i] + particleParams.inverseMass * force * timeStep;
@@ -422,7 +429,7 @@ void SPH::relax() {
      // Relax initial particle distribution and reset velocities
     simulate(10000);
     for (Vector3f &v : currentFluidVelocity) {
-        v = Vector3f(0.f);
+        v = simConstParams.initVelocity;
     }
     currentTime= 0.f;
     timeBeforeShock = 0.f;
@@ -442,20 +449,31 @@ void SPH::basicSimSetup() {
     relax();
 }
 
+
+// @Func : Adjust the time step for the next frame. The rule for this adjustment is 
+//         simple : If the algorithm realizes that the current simulation loop is 
+//         smooth enough (No rapid force, density, velocity changes), the time step
+//         will increase by 0.2% in the simulation loop. In other word, if the algorithm
+//         detects that there are some rapid changes within the current simulation loop
+//         (for example, lots of collisions are happening in the current frame), it will
+//         decrease the time step by %0.2 in the next frame.
+//         And note that this is a post-loop action.
 void SPH::adjustTimeStep() {
 
-    // Prevent divison by zero
+    // The maximum velocity and force is tracked during the PC loop. 
     maximumVelocity = std::max(1e-8f, maximumVelocity);
     maximumForce = std::max(1e-8f, maximumForce);
 
-    // Adjust timestep
+    // Increase the timestep by 0.2% if the current loop is smooth.
     if ((0.19f * std::sqrt(kernelParams.radius / maximumForce) > timeStep) &&
         (maximumDensityVariance < 4.5f * averageDensityVarianceTh) &&
         (averageDensityVariance < 0.9f * averageDensityVarianceTh) &&
         (0.39f * kernelParams.radius / maximumVelocity > timeStep)) {
         timeStep *= 1.002f;
     }
+    
 
+    // Decrease the timestep by 0.2% if the current loop is fierce.
     if ((0.2f * std::sqrt(kernelParams.radius / maximumForce) < timeStep) ||
         (maximumDensityVariance > 5.5f * averageDensityVarianceTh) ||
         (averageDensityVariance >= averageDensityVarianceTh) ||
@@ -464,23 +482,45 @@ void SPH::adjustTimeStep() {
     }
 }
 
-void SPH::handleShock() {
+//  @Func : This function detects whether there is a shock.
+//          Return true if a shock is detected.
+bool SPH::isShock() {
     
-    if ((maximumDensityVariance - previousMaxDensityVariance > maximumDensityVarianceTh) ||
-        (maximumDensityVariance > maximumDensityVarianceTh) ||
-        (0.45f * kernelParams.radius / maximumVelocity < timeStep)) {
-        if (maximumDensityVariance - previousMaxDensityVariance > maximumDensityVarianceTh) {
-            //PRINT("shock due to [1]");
-        }
-        if (maximumDensityVariance > maximumDensityVarianceTh) {
-            //PRINT("shock due to [2]");
-        }
-        if (0.45f * kernelParams.radius / maximumVelocity < timeStep) {
-            //PRINT("shock due to [3]");
-        }
+    // Shock condition 1 : The density fluctuation difference in two adjacent frames are too big.
+    if (maximumDensityVariance - previousMaxDensityVariance > maximumDensityVarianceTh) {
+        return true;
+    }
+
+    // Shock condition 2 : The current density variance is bigger than the threshhold.
+    // This is possible to happen this if the algorithm cannot converge within the maximum
+    // iterations.
+    if (maximumDensityVariance > maximumDensityVarianceTh) {
+        return true;
+    }
+
+    // Shock condition 3 : 
+    if (0.45f * kernelParams.radius / maximumVelocity < timeStep) {
+        return true;
+    }
+
+    return false;
+}
+
+
+// @Func : This function handles "shocks" happens in during the entire simulation.
+//         Shock is considered as a condition that the current time step is too big
+//         to make the PC-loop to converge. If a shock is detected by the algorithm,
+//         it will automatically rollback the simulation by 2 frames and assign a
+//         new timestep to it based on the physical condition of that shock.
+void SPH::handleShock() {
+
+    
+    if (isShock()) {
+        
+        // Assign a new timestep based on the CURRENT physical condition.
         timeStep = std::min(0.2f * std::sqrt(kernelParams.radius / maximumForce), 0.25f * kernelParams.radius / maximumVelocity);
 
-        // Go back two timesteps
+        // Rollback 2 frames
         currentTime = timeBeforeShock;
         currentFluidPosition = fluidPositionBeforeShock;
         currentFluidVelocity = fluidVelocityBeforeShock;
@@ -488,7 +528,7 @@ void SPH::handleShock() {
     } else {
         previousMaxDensityVariance = maximumDensityVariance;
     }
-
+       
     // store time, positions and velocities of two timesteps back
     // "new" buffer holds positions/velocities before current integration step!
     timeBeforeShock = currentTime;

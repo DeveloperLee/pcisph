@@ -1,4 +1,4 @@
-#version 430
+#version 400
 uniform mat4 mv;
 in vec3 position;
 out vec4 vPosition;

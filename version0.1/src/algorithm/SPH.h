@@ -73,13 +73,15 @@ public:
          float viscosity;       
          float maxCompression; // The maximum compression that the simulation allows. 
          Vector3f gravity;  // The gravity of the simulation space.
+         Vector3f initVelocity;
          
-         void init(float _resD, float _surfT, float _vis, float _maxComp, Vector3f _g) {
+         void init(float _resD, float _surfT, float _vis, float _maxComp, Vector3f _g, Vector3f _iv) {
             restDensity = _resD;
             surfaceTension = _surfT;
             viscosity = _vis;
             maxCompression = _maxComp;
             gravity = _g;
+            initVelocity = _iv;
          }
 	 };
 	 SimConstParameters simConstParams;
@@ -102,10 +104,9 @@ public:
      float timeBeforeShock;
   
     SPH(const Scene &scene);
-
-    void update(float dt);
     void simulate(int maxIterations = 100);
-
+    
+    // Get the current simulation loop status
     const Box3f &getBounds() const { return boundaryBox; }
     float getTimeStep() const { return timeStep; }
     float getCurrentTime() const { return currentTime; }
@@ -142,6 +143,7 @@ private:
     void handleCollisions(std::function<void(size_t i, const Vector3f &n, float d)> handler);
     void adjustParticles();
     void adjustTimeStep();
+    bool isShock();
     void handleShock();
 
     void buildScene(const Scene &scene);
@@ -154,15 +156,16 @@ private:
      PCI1Mf fluidPressures;
      PCI3Mf fluidForces;
      PCI3Mf fluidPressureForces;
-
+     PCI3Mf fluidNormals;
+     
+     // Fluid buffers:
      PCI3Mf currentFluidPosition;
      PCI3Mf newFluidPosition;
      PCI3Mf currentFluidVelocity;
      PCI3Mf newFluidVelocity;
-
      PCI3Mf fluidPositionBeforeShock;
      PCI3Mf fluidVelocityBeforeShock;
-     PCI3Mf fluidNormals;
+     
 
      // Boundary particles:
      PCI1Mi boundaryAlive;
