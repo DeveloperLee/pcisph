@@ -63,6 +63,10 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action ,
         GLWidget::m_engine.loadScene(base_directory + "scenes/test3.json");
     }
 
+    if (key == GLFW_KEY_V && action == GLFW_PRESS) {
+        GLWidget::m_engine.loadScene(base_directory + "scenes/test4.json");
+    }
+
     if(action == GLFW_PRESS){
         cs224::GLWidget::m_engine.onKeyPress(key);
     }else if(action == GLFW_RELEASE){

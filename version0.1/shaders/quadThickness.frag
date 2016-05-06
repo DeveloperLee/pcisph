@@ -67,7 +67,7 @@ void main() {
         float dzdx = (zxp-zxn)/(2.0 * texelSize.x);//maybe not times texelSize
         float dzdy = (zyp-zyn)/(2.0 * texelSize.y);//maybe not times texelSize
         vec3 perp_amount = vec3(dzdx,dzdy,0);
-        perp_amount = mix((1-normal.z)*perp_amount,vec3(0),exp(-thick*1));//blend to make single drops look better
+        perp_amount = mix(clamp((1-normal.z),.05,.5)*perp_amount,vec3(0),exp(-thick*.8));//blend to make single drops look better
         normal = normalize(normal + perp_amount);
     }
     //fresnel
@@ -75,25 +75,25 @@ void main() {
     vec3 eyeToVertex = normalize(eyepos);
     vec3 E = vec3(0,0,1);
     vec3 vertexToEye = -eyeToVertex;
-    float r0 = 0.02;
-    float F = r0 + (1.f-r0)*pow((1-dot(vertexToEye,n)),20);
+    float r0 = 0.2;
+    float F = r0 + (1.f-r0)*pow((1-dot(vertexToEye,n)),5);
 
     //refracted
-    float B = thick*.01;
+    float B = thick*.0035;
     vec2 refracted_sample = uv + (B*n.xy);
     vec3 refracted_scene_color = texture(scene_color,refracted_sample).rgb;
-    vec3 alpha = mix(water_color,refracted_scene_color,exp(-thick*.2));
+    vec3 alpha = mix(water_color,refracted_scene_color,exp(-thick*.1));
     vec3 refracted = clamp(alpha*(1-F),0,1);
 
     //reflected
-    vec3 beta = sceneColor.rgb;//should use cubemap
+    vec3 beta = vec3(.529,.808,.922);//should use cubemap
     //beta = mix(beta,sceneColor.rgb,exp(-thick));//should use cubemap also this is hacked
     vec3 reflected = clamp(beta*F,0,1);
 
     //specular
     vec3 l = normalize(light_pos_view_space.xyz - eyepos);
     vec3 H = normalize(l+vertexToEye);
-    vec3 specular_color = clamp(vec3(1)* pow(clamp(dot(n,H),0,1),30),0,1);
+    vec3 specular_color = clamp(vec3(1)* pow(clamp(dot(n,H),0,1),80),0,1);
 
     vec3 final_color = vec3(0);
     if(doRefracted){

@@ -59,6 +59,13 @@ SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),
     m_quadThicknessShader = ResourceLoader::loadShadersFromText(vert_quad_thickness_str.c_str(),frag_quad_thickness_str.c_str());
 
 
+    const std::string vert_trans_thickness_str = ResourceLoader::fileToString(base_directory+"shaders/quadtrans.vert");
+
+    const std::string frag_trans_thickness_str = ResourceLoader::fileToString(base_directory+"shaders/quadtrans.frag");
+
+    m_quadTransShader = ResourceLoader::loadShadersFromText(vert_trans_thickness_str.c_str(),frag_trans_thickness_str.c_str());
+
+
     m_quad.reset(new Shape());
     GLfloat quadData[30] = {
         -1.f,1.f,0.f, 0.f,1.f,
@@ -89,7 +96,8 @@ SSFRenderer::SSFRenderer(const Vector2i &size) : m_depthFBO(0,size.x(),size.y(),
 
 void SSFRenderer::prepareToDrawScene()
 {
-    glClearColor(.8f,.8f,.8f,1.f);
+    //vec3(.529,.808,.922);
+    glClearColor(.529,.808,.922,1.f);
     glClearDepth(1.f);
     m_sceneFBO.Bind();
     glClearColor(0,0,0,0);
@@ -394,6 +402,31 @@ void SSFRenderer::drawPreRenderedAsYouGo()
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
     GLuint texid = preRender[(frame_number-1)%capped];
     m_preRenderFBO.renderSpecificTextureToFullScreen(texid,m_quad.get());
+}
+
+void SSFRenderer::drawQuad(const Eigen::Matrix4f &v,const Eigen::Matrix4f &p, const Box3f &box)
+{
+
+    Eigen::AngleAxis<float> aa(1.5707,Eigen::Vector3f(1,0,0));
+    Eigen::Affine3f rot = Eigen::Affine3f(aa);
+
+    float rangex = box.max.x() - box.min.x();
+    float rangez = box.max.z() - box.min.z();
+    float centerx = (box.max.x() + box.min.x())/2.f;
+    float centerz = (box.max.z() + box.min.z())/2.f;
+
+    Eigen::Affine3f scale(Eigen::Scaling(rangex/2.f,1.f,rangez/2.f));
+    Eigen::Affine3f trans(Eigen::Translation3f(centerx,0,centerz));
+
+    Eigen::Matrix4f m = (trans*scale*rot).matrix();
+
+    glUseProgram(m_quadTransShader);
+    glUniformMatrix4fv(glGetUniformLocation(m_quadTransShader,"p"),1,GL_FALSE,p.data());
+    glUniformMatrix4fv(glGetUniformLocation(m_quadTransShader,"v"),1,GL_FALSE,v.data());
+    glUniformMatrix4fv(glGetUniformLocation(m_quadTransShader,"m"),1,GL_FALSE,m.data());
+    m_quad->draw();
+
+
 }
 
 }

@@ -85,11 +85,11 @@ void Engine::onMouseMove(double deltaX, double deltaY)
     Eigen::Vector3f look = m_camera.target()-m_camera.position();
     Eigen::Vector3f perp(look.z(),0,-look.x());
 
-    Eigen::AngleAxis<float> aa(-deltaX/1000.0,Eigen::Vector3f(0,1,0));
+    Eigen::AngleAxis<float> aa(-deltaX/10000.0,Eigen::Vector3f(0,1,0));
     Eigen::Affine3f rot = Eigen::Affine3f(aa);
     look = rot * look;
     perp.normalize();
-    Eigen::AngleAxis<float> aay(deltaY/1000.0,perp);
+    Eigen::AngleAxis<float> aay(deltaY/10000.0,perp);
     Eigen::Affine3f roty = Eigen::Affine3f(aay);
     look = roty * look;
 
@@ -182,6 +182,7 @@ void Engine::render() {
         m_SSFRenderer->prepareToDrawScene();
         // Draw world bounding box
         m_domainShader->draw(mvp, m_sph->getBounds());
+        m_SSFRenderer->drawQuad(view,proj,m_sph->getBounds());
 
         // Draw boundary meshes
         for (const auto &shader : m_boundaryMeshShader) {

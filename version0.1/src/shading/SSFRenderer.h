@@ -26,6 +26,7 @@ struct SSFRenderer {
     void draw(const Eigen::Matrix4f &mv, const Eigen::Matrix4f &proj, const MatrixXf &positions, float particleRadius = 0.03f);
     void drawPreRendered();
     void drawPreRenderedAsYouGo();
+    void drawQuad(const Eigen::Matrix4f &v, const Eigen::Matrix4f &p, const Box3f &box);
     void onKeyPress(int key);
 
     void onKeyReleased(int key);
@@ -46,7 +47,7 @@ private:
 
     FBO m_depthFBO,m_blurVertFBO,m_blurHorizFBO,m_cfFBO1,m_cfFBO2,m_thicknessFBO,m_noiseFBO,m_sceneFBO,m_preRenderFBO;
     PCIShader shader,m_thicknessShader, m_noiseShader;
-    GLuint m_blurShader,m_curvatureFlowShader,m_quadThicknessShader;
+    GLuint m_blurShader,m_curvatureFlowShader,m_quadThicknessShader, m_quadTransShader;
     float near = .05;
     float far = 1.2f;
     int renderType=0;
