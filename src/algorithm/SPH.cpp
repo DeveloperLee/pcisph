@@ -321,7 +321,7 @@ void SPH::predictVelocityAndPosition() {
 //         particles with insufficient neighbouring fluid particles.
 void SPH::updatePressures() {
 
-    Thread_float maxDensityVariation(-INFINITY); //Later will be used in adjust timestep and shock detection.
+    Thread_float maxDensityVariation(-PCI_INFINITY); //Later will be used in adjust timestep and shock detection.
     Thread_float accDensityVariation(0.f);
 
      ConcurrentUtils::ccLoop(currentFluidPosition.size(), [&] (size_t i) {
@@ -574,10 +574,10 @@ void SPH::buildScene(const Scene &scene) {
     for (const auto &sceneBox : scene.boxes) {
         switch (sceneBox.type) {
         case Scene::Fluid:
-            generateFluidParticles(ParticleGenerator::generateVolumeBox(sceneBox.bounds, particleParams.radius));
+            generateFluidParticles(ParticleGenerator::generateFromVolumeBox(sceneBox.bounds, particleParams.radius));
             break;
         case Scene::Boundary:
-            generateBoundaryParticles(ParticleGenerator::generateBoundaryBox(sceneBox.bounds, particleParams.radius));
+            generateBoundaryParticles(ParticleGenerator::generateFromBoundaryBox(sceneBox.bounds, particleParams.radius));
             boundaryMeshes.emplace_back(Mesh::createBox(sceneBox.bounds));
             break;
         }
@@ -586,7 +586,7 @@ void SPH::buildScene(const Scene &scene) {
     for (const auto &sceneSphere : scene.spheres) {
         switch (sceneSphere.type) {
         case Scene::Fluid:
-            generateFluidParticles(ParticleGenerator::generateVolumeSphere(sceneSphere.position, sceneSphere.radius, particleParams.radius));
+            generateFluidParticles(ParticleGenerator::generateFromVolumeSphere(sceneSphere.position, sceneSphere.radius, particleParams.radius));
             break;
         }
     }
@@ -595,16 +595,16 @@ void SPH::buildScene(const Scene &scene) {
         Mesh mesh = ObjLoader::load(sceneMesh.filename);
         switch (sceneMesh.type) {
         case Scene::Fluid:
-            generateFluidParticles(ParticleGenerator::generateVolumeMesh(mesh, particleParams.radius));
+            generateFluidParticles(ParticleGenerator::generateFromVolumeMesh(mesh, particleParams.radius));
             break;
         case Scene::Boundary:
-            generateBoundaryParticles(ParticleGenerator::generateBoundaryMesh(mesh, particleParams.radius));
+            generateBoundaryParticles(ParticleGenerator::generateFromBoundaryMesh(mesh, particleParams.radius));
             boundaryMeshes.emplace_back(mesh);
             break;
         }
     }
 
-    generateBoundaryParticles(ParticleGenerator::generateBoundaryBox(scene.world.bounds, particleParams.radius, true));
+    generateBoundaryParticles(ParticleGenerator::generateFromBoundaryBox(scene.world.bounds, particleParams.radius, true));
 }
 
 void SPH::generateFluidParticles(const ParticleGenerator::Volume &volume) {
@@ -618,6 +618,4 @@ void SPH::generateBoundaryParticles(const ParticleGenerator::Boundary &boundary)
     boundaryNormals.insert(boundaryNormals.end(), boundary.normals.begin(), boundary.normals.end());
 }
 
-
-
-}
+} // namespace cs224

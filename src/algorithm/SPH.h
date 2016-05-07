@@ -8,7 +8,7 @@
 #include "visualization/objLoader/ObjLoader.h"
 #include "visualization/geometry/Voxelizer.h"
 #include "visualization/geometry/VoxelGrid.h"
-#include "visualization/particle/ParticleGenerator.h"
+#include "visualization/particle/Particle.h"
 
 #include "utils/Def.h"
 #include "utils/Settings.h"
@@ -21,7 +21,7 @@
 #define RELAX_ITERATION 10000
 #define MIN_ITERATION 3
 #define EPSILON 1e-7f
-#define INFINITY std::numeric_limits<float>::infinity()
+#define PCI_INFINITY std::numeric_limits<float>::infinity()
 
 namespace cs224 {
 

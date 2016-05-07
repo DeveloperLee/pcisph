@@ -15,15 +15,16 @@ public:
     enum Type {
         Fluid,
         Boundary,
+        Unknown
     };
 
     struct Camera {
         Vector3f position = Vector3f(0.f, 0.f, 5.f);
         Vector3f target = Vector3f(0.f);
         Vector3f up = Vector3f(0.f, 1.f, 0.f);
-        float fov = 20.f;
-        float near = 0.01f;
-        float far = 10.f;
+        float fov = 30.f;
+        float near = 0.1f;
+        float far = 100.f;
         int frame = 0;
         Camera() = default;
         Camera(const Settings &props);
@@ -79,5 +80,4 @@ private:
     static std::string typeToString(Type type);
 };
 
-
-} 
+} // namespace cs224 

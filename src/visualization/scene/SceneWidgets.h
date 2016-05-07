@@ -3,7 +3,6 @@
 #include "utils/Def.h"
 
 namespace cs224 {
-
 namespace SceneWidget{
 
 static enum Type {
@@ -55,6 +54,5 @@ struct World {
     std::string toString() const;
 };
 
-}
-
-}
+} // namespace SceneWidget
+} // namespace cs224

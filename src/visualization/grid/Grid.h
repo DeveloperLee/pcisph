@@ -38,48 +38,47 @@ public:
     void update(const PCI3Mf &positions, SwapFunc swap) {
         PCI1Mi cellCount(size.prod(), 0);
         PCI1Mi cellIndex(size.prod(), 0);
-
         size_t count = positions.size();
-
         PCI1Mi indices(count);
 
-        // Update particle index and count number of particles per cell
-        for (size_t i = 0; i < count; ++i) {
+        // update particle index and count number of particles per cell
+        for (size_t i = 0; i < count; ++ i) {
             size_t index = indexLinear(positions[i]);
             indices[i] = index;
-            ++cellCount[index];
+            cellCount[index] += 1;
         }
 
-        // Initialize cell indices & offsets
+        // initialize cell indices & offsets
         size_t index = 0;
-        for (size_t i = 0; i < cellIndex.size(); ++i) {
+        for (size_t i = 0; i < cellIndex.size(); ++ i) {
             cellIndex[i] = index;
             offset[i] = index;
             index += cellCount[i];
         }
         offset.back() = index;
 
-        // Sort particles by index
-        for (int i = 0; i < count; ++i) {
+        // sort particles by index
+        for (int i = 0; i < count; ++ i) {
             while (i >= cellIndex[indices[i]] || i < offset[indices[i]]) {
-                int j = cellIndex[indices[i]]++;
+                int j = cellIndex[indices[i]] ++;
                 std::swap(indices[i], indices[j]);
                 swap(i, j);
             }
         }
     }
     
-    // Method for querying the surrounding sphere geometry within the same grid.
+    // method for querying the surrounding sphere geometry within the same grid.
     template<typename Func>
     void lookup(const Vector3f &pos, float radius, Func func) const {
         Vector3i min = index(pos - Vector3f(radius)).cwiseMax(Vector3i(0));
         Vector3i max = index(pos + Vector3f(radius)).cwiseMin(size - Vector3i(1));
-        for (int z = min.z(); z <= max.z(); ++z) {
-            for (int y = min.y(); y <= max.y(); ++y) {
-                for (int x = min.x(); x <= max.x(); ++x) {
+        for (int z = min.z(); z <= max.z(); ++ z) {
+            for (int y = min.y(); y <= max.y(); ++ y) {
+                for (int x = min.x(); x <= max.x(); ++ x) {
                     int i = z * (size.x() * size.y()) + y * size.x() + x;
+                    
                     for (size_t j = offset[i]; j < offset[i + 1]; ++j) {
-                        if (!func(j)) { return; }
+                        if (!func(j)) return;
                     }
                 }
             }
@@ -98,25 +97,22 @@ public:
         });
     }
     
-     // iterate over all neighbours around p, calling func(j, r, r2)
+    // iterate over all neighbours around p, calling func(j, r, r2)
     template<typename Func>
     inline void queryPair(const float kRadius, const PCI3Mf &positionsNew, const Vector3f &p, const Vector3f &pNew, Func func) {
-        lookup(p, kRadius, [&] (size_t j) {
+        lookup(p, kRadius, [&](size_t j) {
             Vector3f r = pNew - positionsNew[j];
             float r2 = r.squaredNorm();
-            if (r2 < pow2(kRadius)) {
-                func(j, r, r2);
-            }
+            if (r2 < pow2(kRadius)) func(j, r, r2);
             return true;
         });
     }
 
-    // Method for detecting whether the current particle is isolated.
-    // A particle is considered as isolated iff it has no neighbouring 
-    // particles within a given range.
+    // method for detecting whether the current particle is isolated
+    // a particle is considered as isolated iff it has no neighbouring particles within a given range.
     inline bool isAlive(const float kRadius, const PCI3Mf &positions, const Vector3f &p) {
         bool result = false;
-        lookup(p, kRadius, [&] (size_t j) {
+        lookup(p, kRadius, [&](size_t j) {
             if ((p - positions[j]).squaredNorm() < pow2(kRadius)) {
                 result = true;
                 return false;
@@ -128,7 +124,6 @@ public:
     }
 
 private:
-        
     Box3f boundingBox;
     float cellSize;
     float inverseCellSize;
@@ -136,4 +131,4 @@ private:
     std::vector<size_t> offset;
 };
 
-} 
+} // namespace cs224

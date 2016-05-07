@@ -22,11 +22,9 @@ Scene::Camera::Camera(const Settings &props) {
     frame = props.getInteger("frame", frame);
 }
 
-
 Scene::World::World(const Settings &props) {
     bounds = props.getBox3("bounds", bounds);
 }
-
 
 Scene::Shape::Shape(const Settings &props) {
     type = typeFromString(props.getString("type", "fluid"));
@@ -36,12 +34,10 @@ Scene::Box::Box(const Settings &props) : Shape(props) {
     bounds = props.getBox3("bounds");
 }
 
-
 Scene::Sphere::Sphere(const Settings &props) : Shape(props) {
     position = props.getVector3("position");
     radius = props.getFloat("radius");
 }
-
 
 Scene::Mesh::Mesh(const Settings &props) : Shape(props) {
     filename = props.getString("filename");
@@ -59,6 +55,7 @@ Scene Scene::load(const std::string &filename, const json11::Json &settings) {
         std::cout<<"Failed to load the scene" <<std::endl;
     }
     Scene scene;
+    
     // Patch settings
     auto settingsValues = jsonRoot["settings"].object_items();
     for (auto kv : settings.object_items()) {
@@ -119,6 +116,7 @@ Scene::Type Scene::typeFromString(const std::string &name) {
         return Boundary;
     } else {
        std::cout<<"Unknown type name"<<std::endl;
+       return Unknown;
     }
 }
 
@@ -126,8 +124,8 @@ std::string Scene::typeToString(Type type) {
     switch (type) {
     case Fluid: return "fluid";
     case Boundary: return "boundary";
+    case Unknown: return "unknown";
     }
-    return "unknown";
 }
 
-} 
+} // namespace cs224

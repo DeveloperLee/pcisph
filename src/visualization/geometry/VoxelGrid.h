@@ -6,7 +6,7 @@
 
 namespace cs224 {
 
-// Simple 3D voxel grid.
+// simple 3D voxel grid.
 template<typename T>
 class VoxelGrid {
 public:
@@ -23,10 +23,10 @@ public:
 
     // resize the voxel grid
     void resize(const Vector3i &size) {
-        _size = size;
-        _x = _size.x();
-        _xy = _size.x() * _size.y();
-        _voxels.resize(_size.prod());
+        m_size = size;
+        m_x = m_size.x();
+        m_xy = m_size.x() * m_size.y();
+        _voxels.resize(m_size.prod());
     }
 
     // resize the voxel grid
@@ -40,24 +40,24 @@ public:
     }
 
     // specifies the size of the voxel grid (number of voxels)
-    const Vector3i &size() const { return _size; }
+    const Vector3i &size() const { return m_size; }
 
     // specifies the origin in world space
     const Vector3f &origin() const { return _origin; }
     void setOrigin(const Vector3f &origin) { _origin = origin; }
 
     // specifies the cell size in world space
-    float cellSize() const { return _cellSize; }
-    void setCellSize(float cellSize) { _cellSize = cellSize; }
+    float cellSize() const { return m_cellSize; }
+    void setCellSize(float cellSize) { m_cellSize = cellSize; }
 
     // transforms a point in world space to voxel space
     inline Vector3f toVoxelSpace(const Vector3f &vsP) const {
-        return (vsP - _origin) * (1.f / _cellSize);
+        return (vsP - _origin) * (1.f / m_cellSize);
     }
 
     // transforms a point in voxel space to world space
     inline Vector3f toWorldSpace(const Vector3f &wsP) const {
-        return _origin + wsP * _cellSize;
+        return _origin + wsP * m_cellSize;
     }
 
     // voxel data accessor
@@ -75,15 +75,14 @@ public:
     // trilinear filtering
     T trilinear(const Vector3f &vsP) const {
 
-
         Vector3f uvw(vsP - Vector3f(0.5f));
 
         int i0 = std::max(0, int(std::floor(uvw.x())));
         int j0 = std::max(0, int(std::floor(uvw.y())));
         int k0 = std::max(0, int(std::floor(uvw.z())));
-        int i1 = std::min(int(_size.x() - 1), i0 + 1);
-        int j1 = std::min(int(_size.y() - 1), j0 + 1);
-        int k1 = std::min(int(_size.z() - 1), k0 + 1);
+        int i1 = std::min(int(m_size.x() - 1), i0 + 1);
+        int j1 = std::min(int(m_size.y() - 1), j0 + 1);
+        int k1 = std::min(int(m_size.z() - 1), k0 + 1);
         uvw -= Vector3f(float(i0), float(j0), float(k0));
 
         T temp1, temp2;
@@ -113,19 +112,18 @@ public:
 
 private:
     inline size_t linearize(const Vector3i &index) const {
-        return index.z() * _xy + index.y() * _x + index.x();
+        return index.z() * m_xy + index.y() * m_x + index.x();
     }
 
-    Vector3i _size;
-    int _x;
-    int _xy;
+    Vector3i m_size;
+    int m_x;
+    int m_xy;
     Vector3f _origin;
-    float _cellSize = 1.f;
+    float m_cellSize = 1.f;
     std::vector<T> _voxels;
-
 };
 
 typedef VoxelGrid<float> VoxelGridf;
 typedef VoxelGrid<bool> VoxelGridb;
 
-} 
+} // namespace cs224

@@ -178,12 +178,10 @@ add_library(core STATIC
     src/visualization/objLoader/ObjLoader.h 
     src/visualization/objLoader/ObjLoader.cpp
     src/visualization/grid/Grid.h
-    src/visualization/particle/ParticleGenerator.h 
-    src/visualization/particle/ParticleGenerator.cpp
+    src/visualization/particle/Particle.h src/visualization/particle/Particle.cpp
     src/visualization/scene/Scene.h src/visualization/scene/Scene.cpp
     src/visualization/scene/SceneWidgets.h
 
-    src/visualization/geometry/MarchingCubes.h src/visualization/geometry/MarchingCubes.cpp
     src/visualization/geometry/SDF.h src/visualization/geometry/SDF.cpp
     src/visualization/geometry/Voxelizer.h src/visualization/geometry/Voxelizer.cpp
     src/visualization/geometry/VoxelGrid.h

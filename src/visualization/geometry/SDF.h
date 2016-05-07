@@ -17,4 +17,4 @@ public:
     static void build(const Mesh &mesh, VoxelGrid<float> &sdf, const int exact_band = 1);
 };
 
-} 
+} // namespace cs224

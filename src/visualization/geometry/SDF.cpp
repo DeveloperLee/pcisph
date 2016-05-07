@@ -138,6 +138,7 @@ static bool point_in_triangle_2d(double x0, double y0, double x1, double y1,
 }
 
 void SDF::build(const Mesh &mesh, VoxelGrid<float> &sdf, const int exact_band) {
+    
     int ni = sdf.size().x();
     int nj = sdf.size().y();
     int nk = sdf.size().z();
@@ -221,4 +222,4 @@ void SDF::build(const Mesh &mesh, VoxelGrid<float> &sdf, const int exact_band) {
     }
 }
 
-} 
+} // namespace cs224
