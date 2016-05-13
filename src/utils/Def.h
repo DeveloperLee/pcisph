@@ -22,7 +22,7 @@
 
 namespace cs224 {
 
-const std::string base_directory = "/home/dyang3/Downloads/pcisph/";
+const std::string base_directory = "/home/sj4/course/pcisph/";
 
 #define PI 3.1415926536
 
